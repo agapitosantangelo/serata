@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serata · gioco di società</title>
+  <meta name="description" content="Gioco di società per una serata tra amici: uno schermo condiviso e i telefoni come telecomando.">
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Cinzel+Decorative:wght@700&family=Cinzel:wght@600&family=Nunito:wght@400;700;800&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/host.css">
+</head>
+<body data-theme="lobby">
+  <canvas id="fx"></canvas>
+  <div id="app">
+    <header class="topbar">
+      <div class="brand">🎲 Serata <span id="netStatus" class="net-status"></span></div>
+      <div id="hud" class="hud"></div>
+      <div class="topbar__right">
+        <div id="timer"></div>
+        <div id="joinMini" class="join-mini" hidden></div>
+        <button id="mute" class="icon-btn" title="Audio">🔊</button>
+        <button id="fullscreen" class="icon-btn" title="Schermo intero">⛶</button>
+      </div>
+    </header>
+    <main id="stage"></main>
+    <footer id="roster" class="roster"></footer>
+    <button id="advance" class="btn advance" hidden>Avanti ▶</button>
+  </div>
+  <div id="overlay"></div>
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+  <script type="module" src="js/host/main.js"></script>
+</body>
+</html>
