@@ -55,7 +55,7 @@ function renderCodeEntry(error) {
     renderJoinForm();
   };
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
-  show(el('h1', { class: 'logo' }, '🎲 Serata'),
+  show(el('h1', { class: 'logo' }, '🎲 Serata Giochi'),
     el('p', {}, error ?? 'Scrivi il codice che vedi sullo schermo'),
     input, el('button', { class: 'btn btn--big', onclick: go }, 'Continua'));
   input.focus();
@@ -82,7 +82,7 @@ function renderJoinForm() {
     connect();
   };
   name.addEventListener('keydown', (e) => { if (e.key === 'Enter') join(); });
-  show(el('h1', { class: 'logo' }, '🎲 Serata'),
+  show(el('h1', { class: 'logo' }, '🎲 Serata Giochi'),
     el('p', { class: 'muted' }, `Stanza ${code}`),
     name, el('p', { class: 'label' }, 'Scegli il tuo avatar'), grid,
     el('button', { class: 'btn btn--big', onclick: join }, 'Entra nel gioco'));

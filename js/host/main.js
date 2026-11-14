@@ -286,7 +286,7 @@ function renderLobby() {
     el('div', { class: 'lobby__right' },
       el('h2', {}, 'Giocatori'), el('div', { class: 'lobby__players' }),
       el('h2', {}, 'Scegli il gioco'), el('div', { class: 'story-cards' }, STORIES.map(storyCard))));
-  ui.show({ kicker: 'Inquadrate il QR con la fotocamera del telefono', title: 'Serata 🎲', body, layout: 'center' });
+  ui.show({ kicker: 'Inquadrate il QR con la fotocamera del telefono', title: 'Serata Giochi 🎲', body, layout: 'center' });
   renderLobbyPlayers();
   for (const p of active()) sendScreen(p.pid, LOBBY_SCREEN);
 }

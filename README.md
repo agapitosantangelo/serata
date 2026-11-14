@@ -1,4 +1,4 @@
-# Serata 🎲
+# Serata Giochi 🎲
 
 Gioco di società per una serata tra amici: uno schermo condiviso (PC/TV) racconta la storia, ognuno gioca dal proprio telefono dopo aver scansionato il QR.
 
