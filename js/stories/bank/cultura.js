@@ -1,0 +1,31 @@
+// Cultura generale: extra questions. First option is the correct one (shuffled at runtime).
+export default [
+  { d: 1, q: 'Quanti giorni ha un anno bisestile?', options: ['366', '365', '364', '367'] },
+  { d: 1, q: 'Qual è la valuta del Giappone?', options: ['Yen', 'Yuan', 'Won', 'Ringgit'] },
+  { d: 1, q: 'Quanti sono i segni dello zodiaco?', options: ['12', '10', '14', '9'] },
+  { d: 1, q: 'Secondo la leggenda, quale animale allattò Romolo e Remo?', options: ['Una lupa', 'Una capra', 'Un’orsa', 'Una cerva'] },
+  { d: 1, q: 'Chi è il dio greco del mare?', options: ['Poseidone', 'Zeus', 'Ade', 'Apollo'] },
+  { d: 1, q: 'Qual è la lingua ufficiale del Brasile?', options: ['Portoghese', 'Spagnolo', 'Brasiliano', 'Italiano'] },
+  { d: 1, q: 'Quante carte ha un mazzo di carte napoletane?', options: ['40', '52', '36', '54'] },
+  { d: 1, q: 'Quanti anni di matrimonio si festeggiano con le nozze d’oro?', options: ['50', '25', '40', '60'] },
+  { d: 1, q: 'Quale paese regalò la Statua della Libertà agli Stati Uniti?', options: ['Francia', 'Regno Unito', 'Italia', 'Spagna'] },
+
+  { d: 2, q: 'San Petronio è il patrono di quale città?', options: ['Bologna', 'Modena', 'Parma', 'Ferrara'] },
+  { d: 2, q: 'Qual è l’ultima lettera dell’alfabeto greco?', options: ['Omega', 'Zeta', 'Ipsilon', 'Psi'] },
+  { d: 2, q: 'Qual è il numero unico europeo per le emergenze?', options: ['112', '113', '118', '911'] },
+  { d: 2, q: 'Qual è la valuta della Svizzera?', options: ['Franco svizzero', 'Euro', 'Corona svizzera', 'Marco svizzero'] },
+  { d: 2, q: 'In che anno sono entrate in circolazione monete e banconote in euro?', options: ['2002', '1999', '2000', '2001'] },
+  { d: 2, q: 'Quale filosofo greco fu condannato a morte bevendo la cicuta?', options: ['Socrate', 'Platone', 'Aristotele', 'Epicuro'] },
+  { d: 2, q: 'Che cosa raffigura la moneta italiana da 1 euro?', options: ['L’Uomo vitruviano', 'Il Colosseo', 'Dante Alighieri', 'La Venere di Botticelli'] },
+  { d: 2, q: 'Quale delle sette meraviglie del mondo antico esiste ancora oggi?', options: ['La piramide di Cheope', 'Il Colosso di Rodi', 'Il Faro di Alessandria', 'Il Mausoleo di Alicarnasso'] },
+  { d: 2, q: 'Che cosa significa la locuzione latina “carpe diem”?', options: ['Cogli l’attimo', 'Il dado è tratto', 'Conosci te stesso', 'Ricordati che devi morire'] },
+
+  { d: 3, q: 'In quale città ha sede ufficiale il Parlamento europeo?', options: ['Strasburgo', 'Bruxelles', 'Lussemburgo', 'Francoforte'] },
+  { d: 3, q: 'Qual è il motto ufficiale dell’Unione Europea?', options: ['Unita nella diversità', 'Libertà, uguaglianza, fraternità', 'Pace e prosperità', 'Forza nell’unione'] },
+  { d: 3, q: 'In quale città viene consegnato il premio Nobel per la pace?', options: ['Oslo', 'Stoccolma', 'Ginevra', 'Copenaghen'] },
+  { d: 3, q: 'In quale città ha sede la Corte penale internazionale?', options: ['L’Aia', 'Ginevra', 'Strasburgo', 'Bruxelles'] },
+  { d: 3, q: 'Qual è la lingua ufficiale dell’Iran?', options: ['Persiano', 'Arabo', 'Turco', 'Curdo'] },
+  { d: 3, q: 'Quale filosofo fu precettore di Alessandro Magno?', options: ['Aristotele', 'Platone', 'Socrate', 'Diogene'] },
+  { d: 3, q: 'Chi fondò la Croce Rossa?', options: ['Henry Dunant', 'Florence Nightingale', 'Alfred Nobel', 'Louis Pasteur'] },
+  { d: 3, q: 'Chi fondò il movimento scout?', options: ['Robert Baden-Powell', 'Pierre de Coubertin', 'Rudyard Kipling', 'Henry Ford'] },
+];

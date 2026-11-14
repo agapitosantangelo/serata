@@ -22,6 +22,12 @@ body[data-theme='fantasy'] {
   --accent: #f0b45a; --accent2: #8e6cff; --gold: #ffd36b;
   --font-title: 'Cinzel Decorative', 'Cinzel', Georgia, serif;
 }
+body[data-theme='impostore'] {
+  --bg: #070b10; --bg2: #1a2433; --fg: #f2f4f8; --muted: #9fb0c6;
+  --panel: rgba(255, 255, 255, 0.06); --panel-border: rgba(255, 59, 92, 0.35);
+  --accent: #ff3b5c; --accent2: #3bd5ff; --gold: #ffd166;
+  --font-title: 'Bungee', system-ui, sans-serif;
+}
 body[data-theme='quiz'] {
   --bg: #0b0630; --bg2: #2b0a5e; --fg: #ffffff; --muted: #c6b8ff;
   --accent: #ff2fb3; --accent2: #26e3ff; --gold: #ffd400;

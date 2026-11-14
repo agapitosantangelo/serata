@@ -1,11 +1,12 @@
 // Giallo: Delitto a Villa Corvara. One player is secretly the murderer.
 import { el, sleep } from '../dom.js';
-import { tallyKeys, topKeys } from '../logic.js';
+import { tallyKeys, topKeys, shuffle } from '../logic.js';
 import {
-  CATEGORIES, setupGiallo, rewardClue, clueText, traitLabel,
+  CATEGORIES, setupGiallo, rewardClue, extraClue, clueText, traitLabel,
 } from './giallo-logic.js';
 
-const DISCUSS_SECONDS = 180;
+const DISCUSS_SECONDS = { 30: 240, 60: 420 };
+const WITNESSES = 2;
 const ACCUSE_SECONDS = 45;
 const CATCH_POINTS = 1000;
 const ESCAPE_POINTS = 1500;
@@ -16,18 +17,32 @@ const QUESTIONS = {
   studio: [
     q('Chi ha creato il detective Hercule Poirot?', ['Agatha Christie', 'Arthur Conan Doyle', 'Georges Simenon', 'Raymond Chandler']),
     q('Come si chiama il fedele amico e aiutante di Sherlock Holmes?', ['Il dottor Watson', 'Il capitano Hastings', 'L’ispettore Lestrade', 'Il professor Moriarty']),
+    q('Come si chiama il commissario creato da Georges Simenon?', ['Maigret', 'Montalbano', 'Derrick', 'Rocco Schiavone']),
   ],
   biblioteca: [
     q('In quale città immaginaria lavora il commissario Montalbano?', ['Vigàta', 'Macondo', 'Castelrotto', 'Roccacannuccia']),
     q('Chi ha scritto “Il nome della rosa”?', ['Umberto Eco', 'Italo Calvino', 'Dino Buzzati', 'Leonardo Sciascia']),
+    q('Chi ha scritto “Dieci piccoli indiani”?', ['Agatha Christie', 'Edgar Allan Poe', 'Arthur Conan Doyle', 'Ellery Queen']),
   ],
   serra: [
     q('Quale veleno è famoso per il suo odore di mandorle amare?', ['Cianuro', 'Arsenico', 'Stricnina', 'Cicuta']),
     q('Quale di queste piante è velenosa?', ['Oleandro', 'Basilico', 'Lavanda', 'Rosmarino']),
+    q('In “Romeo e Giulietta”, come muore Romeo?', ['Bevendo un veleno', 'Trafitto da un pugnale', 'In duello', 'Annegato']),
   ],
   cantina: [
     q('In “Assassinio sull’Orient Express”, chi è il colpevole?', ['Tutti i passeggeri insieme', 'Il maggiordomo', 'Il controllore', 'Nessuno: è un suicidio']),
     q('Quale vino è tipico delle Langhe piemontesi?', ['Barolo', 'Chianti', 'Amarone', 'Brunello']),
+    q('Nel Cluedo classico, quante sono le armi del delitto?', ['6', '5', '8', '9']),
+  ],
+  soffitta: [
+    q('Come si chiama il detective di Edgar Allan Poe, considerato il primo della letteratura?', ['Auguste Dupin', 'Sam Spade', 'Philip Marlowe', 'Nero Wolfe']),
+    q('Chi ha creato il commissario Ricciardi?', ['Maurizio de Giovanni', 'Andrea Camilleri', 'Carlo Lucarelli', 'Gianrico Carofiglio']),
+    q('Qual è l’indirizzo di Sherlock Holmes?', ['221B Baker Street', '10 Downing Street', '4 Privet Drive', '12 Grimmauld Place']),
+  ],
+  giardino: [
+    q('Come si chiama la scrittrice-detective della serie “La signora in giallo”?', ['Jessica Fletcher', 'Miss Marple', 'Agatha Raisin', 'Phryne Fisher']),
+    q('Quale detective di Agatha Christie è un’anziana signora di paese?', ['Miss Marple', 'Jessica Fletcher', 'Tuppence', 'Ariadne Oliver']),
+    q('In quale città è ambientata la serie “Il commissario Ricciardi”?', ['Napoli', 'Roma', 'Palermo', 'Torino']),
   ],
 };
 
@@ -35,7 +50,7 @@ function profileLines(traits) {
   return CATEGORIES.map((c) => `${c.icon} ${c.label}: ${traitLabel(c.key, traits[c.key])}`);
 }
 
-function cardFor(setup, pid) {
+function cardFor(setup, pid, whispers = {}) {
   const traits = setup.traits[pid];
   if (pid === setup.culprit) {
     return {
@@ -54,6 +69,7 @@ function cardFor(setup, pid) {
       'Scopri chi ha ucciso il Barone.',
       ...profileLines(traits),
       `Il tuo indizio (vero): «${clueText(setup.privateClues[pid])}»`,
+      ...(whispers[pid] ? [`👂 Un testimone ti ha sussurrato: «${clueText(whispers[pid])}»`] : []),
       'Condividilo… ma attenzione: il colpevole mentirà sul suo.',
     ],
   };
@@ -106,18 +122,32 @@ function clueStep(step, next) {
   };
 }
 
+async function witness(ctx) {
+  const { g } = ctx.state;
+  const innocents = shuffle(ctx.active().map((p) => p.pid).filter((pid) => pid !== g.culprit && g.traits[pid]), ctx.rng).slice(0, WITNESSES);
+  const whispers = Object.fromEntries(innocents.map((pid) => [pid, extraClue(g, ctx.rng)]));
+  for (const pid of innocents) ctx.sendCard(pid, cardFor(g, pid, whispers));
+  ctx.ui.show({
+    art: 'villa', kicker: 'Un testimone', title: 'Il giardiniere ha visto qualcosa',
+    text: `Il vecchio giardiniere, fradicio di pioggia, giura di aver visto qualcosa dalla finestra. Lo ha sussurrato a ${innocents.length} di voi: controllate la vostra carta… e decidete se fidarvi di chi dice di averlo sentito.`,
+  });
+  ctx.sfx('reveal');
+  await ctx.advance({ phone: 'Controlla la tua carta: forse c’è un sussurro nuovo 👂' });
+  return 'likely3';
+}
+
 async function discuss(ctx) {
   const body = el('div', { class: 'discuss' }, dossier(ctx),
     el('div', { class: 'clue-list' }, ctx.state.clues.map((c) => ctx.ui.clueCard(clueText(c), c.positive))));
   ctx.ui.show({
-    kicker: `Discussione · ${DISCUSS_SECONDS / 60} minuti`, title: 'Chi è stato?',
+    kicker: `Discussione · ${ctx.state.discussSeconds / 60} minuti`, title: 'Chi è stato?',
     text: 'Condividete i vostri indizi privati, confrontateli col fascicolo. Il colpevole mentirà…', body, layout: 'center',
   });
   ctx.sfx('reveal');
-  const countdown = ctx.ui.timer(DISCUSS_SECONDS);
+  const countdown = ctx.ui.timer(ctx.state.discussSeconds);
   await ctx.advance({
     label: 'Passiamo all’accusa ▶', phone: 'Discutete! Riguarda la tua carta 🔒',
-    until: sleep(DISCUSS_SECONDS * 1000),
+    until: sleep(ctx.state.discussSeconds * 1000),
   });
   countdown.stop();
   return 'accuse';
@@ -184,7 +214,9 @@ function roomQuiz(id, label, next) {
   return { type: 'quiz', art: id, kicker: label, questions: QUESTIONS[id], time: 20, next };
 }
 
-const scenes = {
+function build(length) {
+  const long = length === 60;
+  const scenes = {
   intro: {
     type: 'narr', art: 'villa', kicker: 'Villa Corvara · 23:47', title: 'Delitto a Villa Corvara', sfx: 'thunder',
     text: 'Notte di tempesta. Il Barone Ottavio Corvara aveva invitato a cena i suoi ospiti più cari: voi. Poco prima di mezzanotte, un urlo. Il Barone giace nello studio, senza vita. La strada è allagata, nessuno può andarsene. L’assassino è in questa stanza.',
@@ -205,7 +237,12 @@ const scenes = {
   notebook: {
     type: 'write', art: 'taccuino', title: 'Il taccuino del Barone',
     text: 'Tra le pagine c’è un’ultima frase, interrotta a metà: «Se stanotte mi succede qualcosa, è perché…». Completatela voi: vince la più convincente (o la più assurda).',
-    placeholder: '…ho scoperto chi mangia la mia Nutella', next: 'vote2',
+    placeholder: '…ho scoperto chi mangia la mia Nutella', next: long ? 'alibi' : 'vote2',
+  },
+  alibi: {
+    type: 'write', art: 'studio', title: 'L’interrogatorio',
+    text: 'Il commissario vuole il vostro alibi. Scrivete in una frase cosa facevate alle 22: poi tutti votano l’alibi più convincente. (Il colpevole farà bene a inventarne uno ottimo…)',
+    placeholder: 'Ero in cucina a rubare il tiramisù', next: 'vote2',
   },
   vote2: {
     type: 'vote', art: 'villa', title: 'Dove cerchiamo adesso?',
@@ -215,7 +252,18 @@ const scenes = {
   quiz_serra: roomQuiz('serra', 'Indagine nella serra', 'clue2'),
   cantina: room('cantina', 'cantina', 'La cantina', 'Botti, bottiglie impolverate e impronte fresche sul pavimento umido. Una bottiglia di annata è stata stappata stanotte. Rispondete e seguite le tracce.'),
   quiz_cantina: roomQuiz('cantina', 'Indagine in cantina', 'clue2'),
-  clue2: { type: 'custom', run: clueStep(1, 'likely2') },
+  clue2: { type: 'custom', run: clueStep(1, long ? 'witness' : 'likely2') },
+  witness: { type: 'custom', run: witness },
+  likely3: { type: 'likely', art: 'accusa', title: 'abbia mentito almeno una volta stasera?', next: 'vote3' },
+  vote3: {
+    type: 'vote', art: 'villa', title: 'Ultima pista: dove andiamo?',
+    options: [{ label: '🕯️ La soffitta', goto: 'soffitta' }, { label: '⛲ Il giardino', goto: 'giardino' }],
+  },
+  soffitta: room('soffitta', 'soffitta', 'La soffitta', 'Polvere, bauli e ritratti girati verso il muro. Un baule è stato aperto da poco: le impronte nella polvere sono fresche. Rispondete e scoprite cosa cercava l’assassino.'),
+  quiz_soffitta: roomQuiz('soffitta', 'Indagine in soffitta', 'clue3'),
+  giardino: room('giardino', 'giardino', 'Il giardino', 'La fontana trabocca di pioggia. Nel fango, vicino alla siepe, qualcuno ha lasciato cadere qualcosa mentre scappava. Rispondete e seguite le tracce.'),
+  quiz_giardino: roomQuiz('giardino', 'Indagine in giardino', 'clue3'),
+  clue3: { type: 'custom', run: clueStep(2, 'likely2') },
   likely2: { type: 'likely', art: 'accusa', title: 'sia il vero colpevole? (sondaggio a caldo)', next: 'discuss' },
   discuss: { type: 'custom', run: discuss },
   accuse: { type: 'custom', run: accuse },
@@ -226,6 +274,13 @@ const scenes = {
       : { art: 'accusa', title: 'Il delitto perfetto', text: 'Nessuno saprà mai la verità… tranne il colpevole, che stanotte dormirà benissimo.', sad: true }),
   },
 };
+  return {
+    start: 'intro',
+    scenes,
+    initialState: () => ({ clues: [], discussSeconds: DISCUSS_SECONDS[length] ?? DISCUSS_SECONDS[30], totalClues: long ? 3 : 2 }),
+    hud: (ctx) => `🔍 Indizi: ${ctx.state.clues?.length ?? 0}/${ctx.state.totalClues}`,
+  };
+}
 
 export default {
   id: 'giallo',
@@ -234,9 +289,5 @@ export default {
   cover: 'villa',
   theme: 'giallo',
   minPlayers: 3,
-  minutes: 35,
-  start: 'intro',
-  scenes,
-  initialState: () => ({ clues: [] }),
-  hud: (ctx) => `🔍 Indizi: ${ctx.state.clues?.length ?? 0}/2`,
+  build,
 };

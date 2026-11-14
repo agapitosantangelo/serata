@@ -195,7 +195,10 @@ const RENDERERS = {
 
   text: (s) => {
     const max = Math.min(s.max ?? MAX_TEXT, MAX_TEXT);
-    const area = el('textarea', { class: 'field field--area', maxlength: String(max), placeholder: s.placeholder ?? '', rows: '3' });
+    const single = max <= 30;
+    const area = single
+      ? el('input', { class: 'field', maxlength: String(max), placeholder: s.placeholder ?? '', autocomplete: 'off', enterkeyhint: 'send' })
+      : el('textarea', { class: 'field field--area', maxlength: String(max), placeholder: s.placeholder ?? '', rows: '3' });
     const counter = el('span', { class: 'counter' }, `0/${max}`);
     const send = el('button', {
       class: 'btn btn--big',
@@ -208,6 +211,7 @@ const RENDERERS = {
       },
     }, 'Invia');
     area.addEventListener('input', () => { counter.textContent = `${area.value.length}/${max}`; });
+    if (single) area.addEventListener('keydown', (e) => { if (e.key === 'Enter') send.click(); });
     setTimeout(() => area.focus(), 50);
     return [el('h2', { class: 'q-title' }, s.title), area, counter, send];
   },
@@ -243,7 +247,7 @@ const RENDERERS = {
     return [
       el('div', { class: `result-icon ${s.good ? 'is-good' : 'is-bad'}` }, s.good ? '✔' : '✖'),
       el('h2', {}, s.title ?? ''),
-      s.points ? el('div', { class: 'points' }, `+${s.points.toLocaleString('it-IT')}`) : null,
+      s.points ? el('div', { class: `points ${s.points < 0 ? 'is-negative' : ''}` }, `${s.points > 0 ? '+' : ''}${s.points.toLocaleString('it-IT')}`) : null,
       s.text ? el('p', { class: 'muted' }, s.text) : null,
     ];
   },

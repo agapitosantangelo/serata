@@ -77,6 +77,13 @@ export function createUI() {
     });
   }
 
+  function revealAll(board, counts) {
+    [...board.children].forEach((node, i) => {
+      node.classList.add('is-right');
+      node.querySelector('.quiz-opt__count').textContent = counts[i] ? `${counts[i]} 👤` : '';
+    });
+  }
+
   function voteBoard(options) {
     return el('div', { class: 'vote-board' }, options.map((text, i) => el('div', { class: 'vote-opt', style: { animationDelay: `${i * 0.1}s` } },
       el('div', { class: 'vote-opt__bar' }), el('span', { class: 'vote-opt__label' }, text), el('span', { class: 'vote-opt__count' }))));
@@ -190,7 +197,7 @@ export function createUI() {
   }
 
   return {
-    show, timer, quizBoard, revealQuiz, voteBoard, revealVote, pickBoard, revealPick,
+    show, timer, quizBoard, revealQuiz, revealAll, voteBoard, revealVote, pickBoard, revealPick,
     answersBoard, revealAnswers, banner, shake, dice, leaderboard, podium, playerCards, clueCard,
   };
 }

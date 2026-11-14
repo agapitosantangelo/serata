@@ -249,13 +249,18 @@ function renderLobbyPlayers() {
   }
 }
 
+const LENGTHS = [30, 60];
+
 function storyCard(story) {
-  return el('button', { class: 'story-card', onclick: () => startStory(story) },
+  return el('div', { class: 'story-card' },
     el('div', { class: 'story-card__art', svg: art(story.cover) }),
     el('div', { class: 'story-card__body' },
       el('h3', {}, story.title),
       el('p', {}, story.blurb),
-      el('small', {}, `${story.minPlayers}+ giocatori · circa ${story.minutes} min`)));
+      el('small', {}, `${story.minPlayers}+ giocatori`),
+      el('div', { class: 'story-card__lengths' }, LENGTHS.map((minutes) => el('button', {
+        class: 'btn', onclick: () => startStory(story, minutes), 'aria-label': `${story.title}, circa ${minutes} minuti`,
+      }, `⏱ ${minutes} min`)))));
 }
 
 function renderLobby() {
@@ -298,7 +303,7 @@ function makeCtx(story) {
     addPoints(pid, n) {
       if (!n) return;
       const p = playerById(pid);
-      if (p) { updatePlayer(pid, { score: p.score + n }); renderRoster(); }
+      if (p) { updatePlayer(pid, { score: Math.max(0, p.score + n) }); renderRoster(); }
     },
     send: sendScreen,
     sendCard(pid, card) {
@@ -311,9 +316,10 @@ function makeCtx(story) {
   return ctx;
 }
 
-async function startStory(story) {
+async function startStory(base, length) {
   unlockAudio();
   if (running) return;
+  const story = { ...base, ...base.build(length) };
   if (active().length < story.minPlayers) {
     ui.banner(`Servono almeno ${story.minPlayers} giocatori connessi`, 'bad', 2200);
     return;

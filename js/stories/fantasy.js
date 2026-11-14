@@ -17,8 +17,13 @@ const RIDDLES = [
   q('Al mattino cammina a quattro zampe, a mezzogiorno con due, la sera con tre. Chi è?', ['L’uomo', 'Il cavallo', 'Il gatto', 'Il ragno']),
   q('Ha un occhio solo ma non vede. Cos’è?', ['L’ago', 'La talpa', 'Il pirata', 'La luna']),
   q('Basta dire il suo nome per romperlo. Cos’è?', ['Il silenzio', 'Il vetro', 'Lo specchio', 'Il ghiaccio']),
+  q('Più ce n’è, meno si vede. Cos’è?', ['Il buio', 'Il sole', 'L’acqua', 'Lo specchio']),
+  q('Ha i tasti ma non apre nessuna porta. Cos’è?', ['Il pianoforte', 'Il portiere', 'Il lucchetto', 'Il forziere']),
+  q('Cade sempre ma non si fa mai male. Cos’è?', ['La pioggia', 'Il sasso', 'L’acrobata', 'Il bicchiere']),
+  q('Corre ma non ha gambe, ha un letto ma non dorme mai. Cos’è?', ['Il fiume', 'Il vento', 'Il treno', 'Il tempo']),
+  q('Ha le lancette ma non punge. Cos’è?', ['L’orologio', 'Il riccio', 'Il cactus', 'L’ape']),
 ];
-const BOSS_QUESTIONS = [
+const TRIVIA = [
   q('Chi ha scritto “Il Signore degli Anelli”?', ['J.R.R. Tolkien', 'C.S. Lewis', 'George R.R. Martin', 'Terry Pratchett']),
   q('Come si chiama il drago de “Lo Hobbit”?', ['Smaug', 'Drogon', 'Falkor', 'Shenron']),
   q('Come si chiama il martello di Thor?', ['Mjöllnir', 'Gungnir', 'Excalibur', 'Durlindana']),
@@ -28,6 +33,15 @@ const BOSS_QUESTIONS = [
   q('Quanti sono i nani nella fiaba di Biancaneve?', ['7', '6', '8', '12']),
   q('Quale mago guida la Compagnia dell’Anello?', ['Gandalf', 'Merlino', 'Saruman', 'Silente']),
   q('Quale pianeta prende il nome dal dio romano della guerra?', ['Marte', 'Giove', 'Saturno', 'Mercurio']),
+  q('Come si chiama il leone delle “Cronache di Narnia”?', ['Aslan', 'Mufasa', 'Simba', 'Leo']),
+  q('Quale creatura ha corpo di leone e testa e ali d’aquila?', ['Il grifone', 'La sfinge', 'La chimera', 'L’ippogrifo']),
+  q('Come si chiama la scuola di magia di Harry Potter?', ['Hogwarts', 'Beauxbatons', 'Durmstrang', 'Ilvermorny']),
+  q('Nel “Signore degli Anelli”, quanti anelli furono dati agli uomini?', ['9', '7', '3', '12']),
+  q('Nella mitologia greca, chi uccise Medusa?', ['Perseo', 'Ercole', 'Teseo', 'Achille']),
+  q('Come si chiama il cavallo con un corno sulla fronte?', ['Unicorno', 'Pegaso', 'Centauro', 'Ippogrifo']),
+  q('Chi è il re degli dèi nella mitologia greca?', ['Zeus', 'Ade', 'Poseidone', 'Apollo']),
+  q('Cosa diventava d’oro toccato da re Mida?', ['Tutto ciò che toccava', 'Ciò che guardava', 'Le sue parole', 'Solo l’acqua']),
+  q('In quale regione si trova il castello del conte Dracula nel romanzo di Stoker?', ['Transilvania', 'Baviera', 'Scozia', 'Boemia']),
 ];
 const CLASSES = [
   { icon: '⚔️', name: 'Guerriero', text: 'Colpisci forte, pensi dopo.' },
@@ -74,9 +88,9 @@ async function classes(ctx) {
 
 async function boss(ctx) {
   const heroes = Math.max(1, ctx.active().length);
-  const perHit = Math.ceil((BOSS_HP / (heroes * 2.5)) * (ctx.state.sword ? SWORD_MULT : 1));
+  const perHit = Math.ceil((BOSS_HP / (heroes * ctx.state.bossToughness)) * (ctx.state.sword ? SWORD_MULT : 1));
   ctx.setState({ boss: BOSS_HP });
-  const pool = shuffle(BOSS_QUESTIONS, ctx.rng);
+  const pool = ctx.state.bossPool;
   for (let round = 0; round < pool.length && ctx.state.boss > 0 && ctx.state.hp > 0; round++) {
     await askQuestion(ctx, pool[round], {
       time: BOSS_TIME, art: 'dragon', kicker: `🐉 Il drago chiede · round ${round + 1}`,
@@ -113,7 +127,19 @@ function hud(ctx) {
 
 const partyName = (ctx) => (ctx.state.lastWrite?.[0] ? `«${ctx.state.lastWrite[0]}»` : 'la vostra compagnia');
 
-const scenes = {
+function build(length) {
+  const long = length === 60;
+  const riddles = shuffle(RIDDLES);
+  const trivia = shuffle(TRIVIA);
+  const take = (list, n) => list.splice(0, n);
+  const cryptQ = take(riddles, long ? 4 : 3);
+  const bridgeQ = take(riddles, long ? 3 : 2);
+  const lakeQ = take(riddles, long ? 2 : 1);
+  const forestQ = take(trivia, long ? 3 : 2);
+  const knightQ = take(trivia, 3);
+  const bossPool = trivia;
+
+  const scenes = {
   intro: {
     type: 'narr', art: 'tower', kicker: 'Le Terre di Brinacorvo', title: 'La Torre di Brinacorvo',
     text: 'Da cento anni un drago dorme in cima alla Torre di Brinacorvo, sopra un tesoro rubato a mezzo regno. Stanotte si è svegliato. Il re cercava eroi… e ha trovato voi. Avete 10 cuori in comune: se finiscono, finisce l’avventura.',
@@ -130,9 +156,9 @@ const scenes = {
     next: 'cryptRiddles',
   },
   cryptRiddles: {
-    type: 'quiz', art: 'crypt', kicker: 'Indovinelli della cripta', questions: RIDDLES.slice(0, 3), time: 25,
+    type: 'quiz', art: 'crypt', kicker: 'Indovinelli della cripta', questions: cryptQ, time: 25,
     after: async (ctx, r) => { if (!r.success) await damage(ctx, 2); },
-    next: 'camp',
+    next: long ? 'goblin' : 'fork2',
   },
   bridge: {
     type: 'narr', art: 'bridge', kicker: 'Il burrone', title: 'Il ponte di corda',
@@ -147,8 +173,44 @@ const scenes = {
     next: 'bridgeRiddles',
   },
   bridgeRiddles: {
-    type: 'quiz', art: 'bridge', kicker: 'Il guardiano del ponte', questions: RIDDLES.slice(3), time: 25,
+    type: 'quiz', art: 'bridge', kicker: 'Il guardiano del ponte', questions: bridgeQ, time: 25,
     after: async (ctx, r) => { if (!r.success) await damage(ctx, 1); },
+    next: long ? 'goblin' : 'fork2',
+  },
+  goblin: {
+    type: 'write', art: 'goblin', title: 'Il mercante goblin',
+    text: 'Un goblin con un cappello enorme blocca le scale: «Pedaggio! Dieci monete d’oro a testa!» Non avete un soldo. Scrivete la scusa più convincente (o assurda) per farvi passare gratis.',
+    placeholder: 'Siamo ispettori delle tasse goblin', next: 'fork2',
+  },
+  fork2: {
+    type: 'vote', art: 'tower', title: 'La torre si divide di nuovo. Da che parte?',
+    options: [{ label: '🌊 Il lago sotterraneo', goto: 'lake' }, { label: '🌲 Il bosco stregato', goto: 'forest' }],
+  },
+  lake: {
+    type: 'narr', art: 'lake', kicker: 'Il lago sotterraneo', title: 'Acque nere',
+    text: 'Una barca bucata e un lago nero come l’inchiostro. Qualcosa si muove sotto la superficie. Qualcuno dovrà remare… in fretta.',
+    next: 'lakeDice',
+  },
+  lakeDice: {
+    type: 'dice', art: 'lake', title: 'Remare fino all’altra riva', target: 10,
+    success: 'Con bracciate furiose la barca tocca la riva un attimo prima che i tentacoli la afferrino!',
+    fail: 'Un tentacolo rovescia la barca! Tutti a nuoto, infreddoliti e spaventati: -2 cuori.',
+    onFail: (ctx) => damage(ctx, 2),
+    next: 'lakeRiddles',
+  },
+  lakeRiddles: {
+    type: 'quiz', art: 'lake', kicker: 'La sirena del lago', questions: lakeQ, time: 25,
+    after: async (ctx, r) => { if (!r.success) await damage(ctx, 1); },
+    next: 'camp',
+  },
+  forest: {
+    type: 'narr', art: 'forest', kicker: 'Il bosco stregato', title: 'Gli alberi che parlano',
+    text: 'Dentro la torre cresce un bosco impossibile. Gli alberi hanno occhi e voci antiche: «Rispondete, viandanti. Gli ignoranti restano qui… per sempre.»',
+    next: 'forestQuiz',
+  },
+  forestQuiz: {
+    type: 'quiz', art: 'forest', kicker: 'Gli spiriti del bosco', questions: forestQ, time: 20,
+    after: async (ctx, r) => { if (!r.success) await damage(ctx, 2); },
     next: 'camp',
   },
   camp: {
@@ -163,8 +225,22 @@ const scenes = {
       { label: '⚔️ Spada Ammazzadraghi (+50% danni al drago)', effect: (ctx) => ctx.setState({ sword: true }) },
       { label: '🧪 Pozione della Fenice (+4 cuori)', effect: (ctx) => heal(ctx, POTION_HEAL) },
     ],
-    next: 'climb',
+    next: long ? 'knight' : 'climb',
   },
+  knight: {
+    type: 'narr', art: 'knight', kicker: 'La sala d’armi', title: 'Il Cavaliere Maledetto', sfx: 'reveal',
+    text: 'Un’armatura vuota si alza da sola, la spada in pugno. «Nessuno passa senza rispondere», rimbomba dall’elmo. «Sbagliate, e la mia lama vi ricorderà il prezzo dell’ignoranza.»',
+    next: 'knightQuiz',
+  },
+  knightQuiz: {
+    type: 'quiz', art: 'knight', kicker: 'Il Cavaliere Maledetto', questions: knightQ, time: 20,
+    after: async (ctx, r) => {
+      if (!r.success) await damage(ctx, 2);
+      else { ctx.sfx('fanfare'); await ctx.ui.banner('Il cavaliere si inchina e vi lascia passare!', 'good', 1600); }
+    },
+    next: 'likely2',
+  },
+  likely2: { type: 'likely', art: 'campfire', title: 'tradirebbe la compagnia per un sacchetto d’oro?', next: 'climb' },
   climb: {
     type: 'dice', art: 'climb', title: 'La scalata finale', target: 12,
     text: 'L’ultima rampa di scale è crollata: bisogna arrampicarsi sulla parete esterna, nel vento.',
@@ -199,6 +275,14 @@ const scenes = {
     outcome: (ctx) => ({ art: ctx.state.boss <= 0 ? 'treasure' : 'campfire', title: 'Chi è l’eroe della serata?', text: 'Punti per risposte giuste, prove superate e voti dei compagni. Ecco la classifica…' }),
   },
 };
+  return {
+    start: 'intro',
+    scenes,
+    initialState: () => ({ hp: MAX_HP, maxHp: MAX_HP, sword: false, bossPool, bossToughness: long ? 3.5 : 2.5 }),
+    hud,
+    guard: (ctx, next) => (ctx.state.hp <= 0 && !['dead', 'end', 'END'].includes(next) ? 'dead' : next),
+  };
+}
 
 export default {
   id: 'fantasy',
@@ -207,10 +291,5 @@ export default {
   cover: 'tower',
   theme: 'fantasy',
   minPlayers: 2,
-  minutes: 30,
-  start: 'intro',
-  scenes,
-  initialState: () => ({ hp: MAX_HP, maxHp: MAX_HP, sword: false }),
-  hud,
-  guard: (ctx, next) => (ctx.state.hp <= 0 && !['dead', 'end', 'END'].includes(next) ? 'dead' : next),
+  build,
 };

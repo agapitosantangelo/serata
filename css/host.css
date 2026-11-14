@@ -53,12 +53,16 @@ body[data-theme='giallo'] .scene__art { filter: sepia(0.15); }
 .lobby-player { display: flex; align-items: center; gap: 0.5rem; background: var(--panel); border: 1px solid var(--panel-border); border-radius: 999px; padding: 0.35rem 1rem 0.35rem 0.4rem; font-weight: 800; animation: pop-in 0.5s both; }
 .lobby-player__avatar { font-size: 1.8rem; }
 .muted { color: var(--muted); }
-.story-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.story-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
 .story-card { padding: 0; text-align: left; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--panel-border); background: var(--panel);
   transition: transform 0.2s, box-shadow 0.2s; animation: rise 0.5s both; }
-.story-card:nth-child(2) { animation-delay: 0.1s; } .story-card:nth-child(3) { animation-delay: 0.2s; }
-.story-card:hover, .story-card:focus-visible { transform: translateY(-6px) rotate(-0.5deg); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); outline: none; }
-.story-card__art { aspect-ratio: 4 / 3; }
+.story-card:nth-child(2) { animation-delay: 0.1s; } .story-card:nth-child(3) { animation-delay: 0.2s; } .story-card:nth-child(4) { animation-delay: 0.3s; }
+.story-card:hover, .story-card:focus-within { transform: translateY(-6px) rotate(-0.5deg); box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45); outline: none; }
+.story-card { display: grid; grid-template-columns: 40% 1fr; }
+.story-card__art { aspect-ratio: 4 / 3; height: 100%; }
+.story-card__art .art { height: 100%; object-fit: cover; }
+.story-card__lengths { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
+.story-card__lengths .btn { padding: 0.5em 1em; font-size: 0.95rem; }
 .story-card__body { padding: 0.9rem 1rem 1.1rem; }
 .story-card h3 { margin: 0 0 0.3rem; font-size: 1.15rem; }
 .story-card p { margin: 0 0 0.5rem; color: var(--muted); font-size: 0.95rem; line-height: 1.35; }
@@ -99,6 +103,15 @@ body[data-theme='giallo'] .scene__art { filter: sepia(0.15); }
 .answer-card__text { font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
 .answer-card__meta { margin-top: 0.6rem; color: var(--muted); font-weight: 800; min-height: 1.2em; }
 .answer-card.is-winner { transform: scale(1.05) rotate(-1deg); border-color: var(--gold); box-shadow: 0 0 40px rgba(255, 210, 100, 0.4); }
+
+/* Impostore words board */
+.words-board { display: grid; gap: 0.6rem; width: min(1000px, 100%); margin: 0 auto; text-align: left; }
+.words-row { display: grid; grid-template-columns: minmax(10rem, 14rem) 1fr; align-items: center; gap: 1rem; padding: 0.7rem 1rem; border-radius: 14px;
+  background: var(--panel); border: 2px solid var(--panel-border); font-weight: 800; font-size: 1.25rem; transition: border-color 0.3s, transform 0.3s; }
+.words-row.is-turn { border-color: var(--accent); transform: scale(1.02); box-shadow: 0 0 30px rgba(255, 59, 92, 0.3); }
+.words-row__who { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.words-row__words { display: flex; flex-wrap: wrap; gap: 0.5rem; min-height: 2rem; }
+.word-chip { padding: 0.25rem 0.9rem; border-radius: 999px; background: var(--fg); color: var(--bg); animation: pop-in 0.4s both; }
 
 /* Player cards (dossier, classes) */
 .player-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 0.9rem; width: 100%; text-align: left; }

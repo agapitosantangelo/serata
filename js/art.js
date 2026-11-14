@@ -200,6 +200,77 @@ export const ART = {
     <circle cx="188" cy="118" r="8" fill="#101018"/><circle cx="212" cy="118" r="8" fill="#101018"/>
     ${[0, 1, 2].map((i) => `<circle cx="${170 + i * 30}" cy="90" r="10" fill="#666" opacity=".2" class="a-smoke" style="animation-delay:${i}s"/>`).join('')}`),
 
+  lake: () => svg(`${sky('fk', '#050a14', '#0d1c2e')}
+    <path d="M0 0 H400 V60 Q300 100 200 70 T0 80Z" fill="#03060c"/>
+    ${[40, 120, 330].map((x, i) => `<path d="M${x} 60 l8 40 l8 -40z" fill="#1a2a3a" class="a-drip" style="animation-delay:${i * 0.9}s"/>`).join('')}
+    <rect x="0" y="170" width="400" height="130" fill="#071526"/>
+    ${[190, 215, 240, 265].map((y, i) => `<path d="M0 ${y} Q100 ${y - 6} 200 ${y} T400 ${y}" stroke="#2b5a7a" stroke-width="2" fill="none" opacity=".5" class="a-float" style="animation-delay:${i * 0.5}s"/>`).join('')}
+    <path d="M150 196 Q200 214 250 196 L240 210 Q200 222 160 210Z" fill="#5a3a1e"/>
+    <path d="M200 196 L200 150 L232 186Z" fill="#cfc6a8" opacity=".85"/>
+    <path d="M300 300 C290 250 330 240 320 200 C316 186 330 180 334 196 C340 220 312 240 326 300Z" fill="#1d5a4a" class="a-sway"/>
+    <circle cx="80" cy="140" r="40" fill="#5ad1ff" opacity=".07" class="a-glow"/>`),
+
+  forest: () => svg(`${sky('fo', '#0a1410', '#14261c')}
+    ${[[40, 1.1], [110, 0.9], [300, 1.2], [360, 0.95]].map(([x, k], i) => `<g class="a-sway" style="animation-delay:${i * 0.6}s"><rect x="${x - 8}" y="${300 - 170 * k}" width="16" height="${170 * k}" fill="#24180e"/>
+      <path d="M${x} ${300 - 260 * k} L${x - 50 * k} ${300 - 150 * k} H${x + 50 * k}Z M${x} ${300 - 220 * k} L${x - 60 * k} ${300 - 100 * k} H${x + 60 * k}Z" fill="#163a24"/></g>`).join('')}
+    <g><rect x="182" y="110" width="36" height="190" fill="#3a2614"/>
+    <ellipse cx="200" cy="100" rx="90" ry="70" fill="#1f4a2c"/>
+    <ellipse cx="186" cy="170" rx="6" ry="8" fill="#ffe27a" class="a-blink"/><ellipse cx="214" cy="170" rx="6" ry="8" fill="#ffe27a" class="a-blink"/>
+    <path d="M186 196 Q200 206 214 196" stroke="#120a04" stroke-width="4" fill="none"/></g>
+    ${[60, 150, 250, 340].map((x, i) => `<circle cx="${x}" cy="${200 + (i % 2) * 40}" r="3" fill="#b6ff7a" class="a-float" style="animation-delay:${i * 0.7}s"/>`).join('')}
+    <rect x="0" y="282" width="400" height="18" fill="#0c1a10"/>`),
+
+  goblin: () => svg(`${sky('fg', '#160e1e', '#2a1a2e')}
+    <rect x="0" y="240" width="400" height="60" fill="#1a1020"/>
+    ${[0, 1, 2, 3, 4, 5].map((i) => `<rect x="${60 + i * 50}" y="${240 - i * 22}" width="50" height="${22 + i * 22}" fill="#2e1f36"/>`).join('')}
+    <g class="a-float"><ellipse cx="200" cy="230" rx="44" ry="30" fill="#3d6a2a"/>
+    <circle cx="200" cy="170" r="36" fill="#5a8f3a"/>
+    <path d="M166 166 L128 146 L170 176Z M234 166 L272 146 L230 176Z" fill="#5a8f3a"/>
+    <path d="M150 140 Q200 60 250 140Z" fill="#7a2a5a"/><rect x="140" y="134" width="120" height="12" rx="6" fill="#5a1a40"/>
+    <circle cx="186" cy="168" r="6" fill="#ffd400"/><circle cx="214" cy="168" r="6" fill="#ffd400"/>
+    <circle cx="186" cy="168" r="2.5" fill="#000"/><circle cx="214" cy="168" r="2.5" fill="#000"/>
+    <path d="M184 192 Q200 202 216 192" stroke="#1a2a10" stroke-width="3" fill="none"/>
+    <circle cx="252" cy="224" r="12" fill="#ffd36b" stroke="#b8860b" class="a-twinkle"/></g>`),
+
+  knight: () => svg(`${sky('fn', '#0e0e16', '#22222e')}
+    <rect x="0" y="250" width="400" height="50" fill="#14141c"/>
+    ${[60, 340].map((x) => `<rect x="${x - 10}" y="60" width="20" height="190" fill="#2a2a38"/><path d="M${x} 50 q-8 10 0 18 q8 -8 0 -18z" fill="#ff9a3c" class="a-flicker"/>`).join('')}
+    <g class="a-float"><path d="M168 250 L176 170 H224 L232 250Z" fill="#6a7080"/>
+    <path d="M160 170 Q200 140 240 170 L232 200 H168Z" fill="#8a90a0"/>
+    <rect x="178" y="90" width="44" height="58" rx="18" fill="#9aa0b0"/>
+    <rect x="184" y="112" width="32" height="6" fill="#0a0a10"/>
+    <circle cx="192" cy="115" r="2.5" fill="#ff3d3d" class="a-glow"/><circle cx="208" cy="115" r="2.5" fill="#ff3d3d" class="a-glow"/>
+    <path d="M200 90 q10 -24 26 -20" stroke="#7b1f1f" stroke-width="6" fill="none"/>
+    <rect x="252" y="80" width="8" height="140" fill="#cfd6e0" transform="rotate(12 256 220)"/>
+    <rect x="240" y="196" width="34" height="8" fill="#5a4630" transform="rotate(12 256 220)"/></g>`),
+
+  soffitta: () => svg(`${sky('gso', '#14100c', '#221a12')}
+    <path d="M0 120 L200 20 L400 120 V300 H0Z" fill="#1e1610"/>
+    ${[60, 120, 180, 240, 300, 360].map((x) => `<path d="M${x} ${120 - Math.abs(200 - x) * -0.5 - 100 + Math.abs(200 - x) * 0.5} V300" stroke="#2c2016" stroke-width="3"/>`).join('')}
+    <rect x="182" y="70" width="36" height="30" fill="#8fb3d9" opacity=".25"/><path d="M200 70 V100 M182 85 H218" stroke="#1e1610" stroke-width="3"/>
+    <path d="M190 100 L130 300 H270Z" fill="#cfe0ff" opacity=".06" class="a-glow"/>
+    <rect x="60" y="220" width="110" height="60" fill="#4a3220"/><path d="M60 220 Q115 190 170 220" fill="#5a3e28"/><rect x="108" y="232" width="14" height="16" fill="#c8a24a"/>
+    <rect x="250" y="170" width="70" height="90" fill="#2a1d12" stroke="#8a6a3a" stroke-width="5" transform="rotate(-8 285 215)"/>
+    ${[0, 1, 2, 3, 4].map((i) => `<circle cx="${80 + i * 60}" cy="${150 + (i % 2) * 30}" r="1.6" fill="#e8dcc0" class="a-float" style="animation-delay:${i * 0.5}s"/>`).join('')}`),
+
+  giardino: () => svg(`${sky('ggi', '#0d1220', '#1b2638')}
+    ${stars(18, 77, 80)}
+    <path d="M0 300 V200 Q200 180 400 200 V300Z" fill="#0f1a14"/>
+    ${[30, 80, 330, 380].map((x) => `<rect x="${x - 22}" y="150" width="44" height="70" rx="20" fill="#163024"/>`).join('')}
+    <ellipse cx="200" cy="250" rx="80" ry="18" fill="#3a3f4a"/><ellipse cx="200" cy="246" rx="70" ry="12" fill="#2a4a6a"/>
+    <rect x="192" y="190" width="16" height="56" fill="#5a5f6a"/><ellipse cx="200" cy="190" rx="30" ry="8" fill="#5a5f6a"/>
+    ${[-1, 1].map((d) => `<path d="M200 180 Q${200 + d * 30} 160 ${200 + d * 46} 236" stroke="#8fd3ff" stroke-width="2.5" fill="none" opacity=".7" class="a-glow"/>`).join('')}
+    <path d="M300 268 l14 -4 l4 10 l-14 4z" fill="#c8a24a" class="a-twinkle"/>
+    ${[0, 1, 2].map((i) => `<path d="M${120 + i * 70} 290 l6 -12 l6 12" fill="#2a1d12" opacity=".8"/>`).join('')}`),
+
+  mask: () => svg(`${sky('im', '#0b0f14', '#1a2230')}
+    <g class="a-spin" style="transform-origin:200px 150px">${Array.from({ length: 10 }, (_, i) => `<path d="M200 150 L${200 + 260 * Math.cos((i * Math.PI) / 5)} ${150 + 260 * Math.sin((i * Math.PI) / 5)} L${200 + 260 * Math.cos((i * Math.PI) / 5 + 0.15)} ${150 + 260 * Math.sin((i * Math.PI) / 5 + 0.15)}Z" fill="#ff3b5c" opacity=".07"/>`).join('')}</g>
+    <g class="a-float"><path d="M110 110 Q200 70 290 110 Q300 190 200 230 Q100 190 110 110Z" fill="#f2f2f2"/>
+    <path d="M140 136 Q160 120 180 138 Q160 150 140 136Z M220 138 Q240 120 260 136 Q240 150 220 138Z" fill="#0b0f14"/>
+    <path d="M170 186 Q200 170 230 186" stroke="#0b0f14" stroke-width="5" fill="none"/>
+    <path d="M200 76 Q190 50 210 40" stroke="#ff3b5c" stroke-width="6" fill="none"/></g>
+    <text x="200" y="285" font-size="34" text-anchor="middle" fill="#ff3b5c" font-family="Bungee, sans-serif" class="a-flicker">?</text>`),
+
   // ---------- Quiz ----------
   stage: () => svg(`${sky('qs', '#0b0630', '#1a0a4a')}
     <path d="M60 0 L20 300 H140Z" fill="#26e3ff" opacity=".12" class="a-sway"/>

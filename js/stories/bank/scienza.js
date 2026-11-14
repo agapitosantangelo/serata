@@ -1,0 +1,31 @@
+// Scienza e natura: extra questions. First option is the correct one (shuffled at runtime).
+export default [
+  { d: 1, q: 'Qual è la formula chimica dell’acqua?', options: ['H₂O', 'CO₂', 'H₂O₂', 'NaCl'] },
+  { d: 1, q: 'Quale pianeta è chiamato “pianeta rosso”?', options: ['Marte', 'Venere', 'Giove', 'Saturno'] },
+  { d: 1, q: 'A quanti gradi bolle l’acqua al livello del mare?', options: ['100 °C', '90 °C', '120 °C', '80 °C'] },
+  { d: 1, q: 'Di che cosa si nutre soprattutto il panda gigante?', options: ['Bambù', 'Eucalipto', 'Frutta', 'Pesce'] },
+  { d: 1, q: 'Quale gas assorbono le piante con la fotosintesi?', options: ['Anidride carbonica', 'Ossigeno', 'Azoto', 'Elio'] },
+  { d: 1, q: 'Quanti sono i pianeti del Sistema Solare?', options: ['8', '9', '7', '10'] },
+  { d: 1, q: 'Qual è l’animale terrestre più veloce?', options: ['Ghepardo', 'Leone', 'Cavallo', 'Levriero'] },
+  { d: 1, q: 'Chi formulò la teoria dell’evoluzione per selezione naturale?', options: ['Charles Darwin', 'Isaac Newton', 'Albert Einstein', 'Galileo Galilei'] },
+  { d: 1, q: 'Qual è l’uccello più grande del mondo?', options: ['Struzzo', 'Aquila reale', 'Condor', 'Pellicano'] },
+
+  { d: 2, q: 'Qual è l’organo più grande del corpo umano?', options: ['La pelle', 'Il fegato', 'Il cervello', 'I polmoni'] },
+  { d: 2, q: 'Quale gruppo sanguigno è considerato donatore universale?', options: ['0 negativo', 'AB positivo', 'A positivo', 'B negativo'] },
+  { d: 2, q: 'Quale metallo è liquido a temperatura ambiente?', options: ['Mercurio', 'Piombo', 'Stagno', 'Alluminio'] },
+  { d: 2, q: 'Quale vitamina produce la pelle esposta al sole?', options: ['Vitamina D', 'Vitamina C', 'Vitamina A', 'Vitamina K'] },
+  { d: 2, q: 'Che cosa misura la scala Richter?', options: ['La magnitudo dei terremoti', 'La forza del vento', 'La pressione atmosferica', 'L’intensità della luce'] },
+  { d: 2, q: 'Quanti cuori ha un polpo?', options: ['3', '1', '2', '4'] },
+  { d: 2, q: 'Quanto impiega la luce del Sole ad arrivare sulla Terra?', options: ['Circa 8 minuti', 'Circa 8 secondi', 'Circa 1 ora', 'Circa 1 giorno'] },
+  { d: 2, q: 'Quale organo produce l’insulina?', options: ['Il pancreas', 'Il fegato', 'La milza', 'I reni'] },
+  { d: 2, q: 'Di quale elemento chimico è fatto il diamante?', options: ['Carbonio', 'Silicio', 'Boro', 'Azoto'] },
+
+  { d: 3, q: 'Quale scala misura la durezza dei minerali?', options: ['Scala di Mohs', 'Scala Mercalli', 'Scala Beaufort', 'Scala Kelvin'] },
+  { d: 3, q: 'Quale elemento chimico ha come simbolo la lettera K?', options: ['Potassio', 'Calcio', 'Cobalto', 'Carbonio'] },
+  { d: 3, q: 'A quanti gradi Fahrenheit gela l’acqua?', options: ['32 °F', '0 °F', '212 °F', '50 °F'] },
+  { d: 3, q: 'A quanti gradi Celsius corrisponde lo zero assoluto?', options: ['−273,15 °C', '−173,15 °C', '−373,15 °C', '−300 °C'] },
+  { d: 3, q: 'Che cosa studia la micologia?', options: ['I funghi', 'I muschi', 'I microbi', 'I molluschi'] },
+  { d: 3, q: 'Chi è considerato il padre della genetica?', options: ['Gregor Mendel', 'Charles Darwin', 'Louis Pasteur', 'James Watson'] },
+  { d: 3, q: 'Qual è il pianeta con la temperatura superficiale media più alta?', options: ['Venere', 'Mercurio', 'Marte', 'Giove'] },
+  { d: 3, q: 'Quante ali ha un’ape?', options: ['4', '2', '6', '8'] },
+];

@@ -6,7 +6,11 @@ Gioco di società per una serata tra amici: uno schermo condiviso (PC/TV) raccon
 
 1. Apri la pagina sul PC collegato alla TV.
 2. Tutti scansionano il QR (o aprono `play.html` e scrivono il codice stanza).
-3. Scegli il gioco: *Delitto a Villa Corvara* (giallo, 3+), *La Torre di Brinacorvo* (fantasy, 2+), *Quiz Show* (1+).
+3. Scegli il gioco e la durata (circa 30 o 60 minuti):
+   - *Delitto a Villa Corvara*: giallo con un colpevole segreto tra i giocatori (3+).
+   - *La Torre di Brinacorvo*: avventura fantasy cooperativa con dadi, indovinelli e un drago (2+).
+   - *Quiz Show*: circa 300 domande facili, medie e difficili, round a sorpresa (punti doppi, lampo, a rischio) e domande bonus (1+).
+   - *L’Impostore*: tutti conoscono la parola segreta tranne uno (3+).
 
 Funziona senza server: i telefoni si collegano allo schermo in peer-to-peer (WebRTC via PeerJS, con relay pubblico se la rete lo richiede). Tieni aperta la pagina dello schermo per tutta la partita.
 

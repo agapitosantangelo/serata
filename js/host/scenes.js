@@ -1,6 +1,6 @@
 // Generic scene handlers. Each takes (scene, ctx) and resolves to the next scene id.
 import {
-  tally, winnerIndex, quizPoints, shuffleQuestion, tallyKeys, topKeys, pickOne, shuffle, rank,
+  tally, winnerIndex, quizPoints, QUIZ_BASE_POINTS, shuffleQuestion, tallyKeys, topKeys, pickOne, shuffle, rank,
 } from '../logic.js';
 import { el, sleep } from '../dom.js';
 
@@ -42,27 +42,41 @@ export async function vote(scene, ctx) {
   return chosen.goto ?? nextOf(scene, ctx, win);
 }
 
-/** One multiple-choice question with scoring and reveal. Reused by quiz scenes and boss fights. */
-export async function askQuestion(ctx, question, { time = 20, multiplier = 1, kicker, art, onReveal } = {}) {
-  const q = shuffleQuestion(question, ctx.rng);
+export const DIFFICULTY = {
+  1: { label: '🟢 Facile', mult: 1 },
+  2: { label: '🟡 Media', mult: 1.5 },
+  3: { label: '🔴 Difficile', mult: 2 },
+};
+
+/**
+ * One multiple-choice question with scoring and reveal. Reused by quiz scenes and boss fights.
+ * question.d (1-3) scales points; question.allCorrect makes every answer right (joke bonus questions).
+ */
+export async function askQuestion(ctx, question, { time = 20, multiplier = 1, risk = false, kicker, art, onReveal } = {}) {
+  const q = question.allCorrect ? { ...question, options: shuffle(question.options, ctx.rng), answer: -1 } : shuffleQuestion(question, ctx.rng);
+  const diff = DIFFICULTY[question.d];
+  const label = question.allCorrect ? '⭐ Domanda bonus' : [kicker, diff?.label].filter(Boolean).join(' · ');
+  const mult = multiplier * (diff?.mult ?? 1);
   const board = ctx.ui.quizBoard(q.options);
-  ctx.ui.show({ art: art ?? null, kicker, title: q.q, body: board, layout: art ? 'split' : 'center' });
-  ctx.sfx('whoosh');
+  ctx.ui.show({ art: art ?? null, kicker: label, title: q.q, body: board, layout: art ? 'split' : 'center' });
+  ctx.sfx(question.allCorrect ? 'fanfare' : 'whoosh');
   const { answers, targets } = await ctx.collect({ time, screen: { kind: 'choice', style: 'quiz', title: q.q, options: q.options } });
   const counts = tally(answers, q.options.length);
-  ctx.ui.revealQuiz(board, q.answer, counts);
+  if (question.allCorrect) ctx.ui.revealAll(board, counts);
+  else ctx.ui.revealQuiz(board, q.answer, counts);
 
   let correct = 0;
   for (const pid of targets) {
     const a = answers.get(pid);
-    const ok = a?.value === q.answer;
-    const pts = quizPoints(ok, a?.ms ?? time * 1000, time * 1000, multiplier);
+    const ok = question.allCorrect ? a != null : a?.value === q.answer;
+    // Risk rounds: a wrong answer costs the base points; not answering is safe.
+    const pts = risk && a && !ok ? -Math.round(QUIZ_BASE_POINTS * mult) : quizPoints(ok, a?.ms ?? time * 1000, time * 1000, mult);
     if (ok) correct += 1;
     ctx.addPoints(pid, pts);
     ctx.send(pid, {
       kind: 'result', good: ok, points: pts,
-      title: ok ? 'Giusto!' : a ? 'Sbagliato!' : 'Tempo scaduto!',
-      text: `Risposta corretta: ${q.options[q.answer]}`,
+      title: ok ? (question.allCorrect ? 'Tutte giuste, ovviamente! 😂' : 'Giusto!') : a ? 'Sbagliato!' : 'Tempo scaduto!',
+      text: question.allCorrect ? 'Era una domanda bonus.' : `Risposta corretta: ${q.options[q.answer]}`,
     });
   }
   const total = targets.length;
@@ -83,6 +97,7 @@ export async function quiz(scene, ctx) {
     const r = await askQuestion(ctx, question, {
       time: scene.time ?? 20,
       multiplier: scene.multiplier ?? 1,
+      risk: scene.risk ?? false,
       kicker: `${val(scene.kicker, ctx) ?? 'Quiz'} · ${i + 1}/${questions.length}`,
       art: question.art ?? val(scene.art, ctx),
     });
