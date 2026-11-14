@@ -1,4 +1,6 @@
 // Registry of illustrations kept in separate files (one per adventure).
-const modules = [];
+import rifugio from './rifugio.js';
+import noce from './noce.js';
+import lazzaretto from './lazzaretto.js';
 
-export default Object.assign({}, ...modules);
+export default { ...rifugio, ...noce, ...lazzaretto };
