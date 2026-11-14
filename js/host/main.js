@@ -254,14 +254,20 @@ function renderLobbyPlayers() {
 const LENGTHS = [30, 60];
 
 function storyCard(story) {
+  const chosen = new Set();
+  const toggles = (story.options ?? []).map((opt) => el('label', { class: 'story-option', title: opt.hint ?? '' },
+    el('input', { type: 'checkbox', onchange: (e) => (e.target.checked ? chosen.add(opt.id) : chosen.delete(opt.id)) }),
+    el('span', {}, opt.label)));
   return el('div', { class: 'story-card' },
     el('div', { class: 'story-card__art', svg: art(story.cover) }),
     el('div', { class: 'story-card__body' },
       el('h3', {}, story.title),
       el('p', {}, story.blurb),
       el('small', {}, `${story.minPlayers}+ giocatori`),
+      toggles.length ? el('div', { class: 'story-card__options' }, toggles) : null,
       el('div', { class: 'story-card__lengths' }, LENGTHS.map((minutes) => el('button', {
-        class: 'btn', onclick: () => startStory(story, minutes), 'aria-label': `${story.title}, circa ${minutes} minuti`,
+        class: 'btn', onclick: () => startStory(story, minutes, Object.fromEntries([...chosen].map((id) => [id, true]))),
+        'aria-label': `${story.title}, circa ${minutes} minuti`,
       }, `⏱ ${minutes} min`)))));
 }
 
@@ -319,10 +325,10 @@ function makeCtx(story) {
   return ctx;
 }
 
-async function startStory(base, length) {
+async function startStory(base, length, options = {}) {
   unlockAudio();
   if (running) return;
-  const story = { ...base, ...base.build(length) };
+  const story = { ...base, ...base.build(length, options) };
   if (active().length < story.minPlayers) {
     ui.banner(`Servono almeno ${story.minPlayers} giocatori connessi`, 'bad', 2200);
     return;
@@ -343,7 +349,13 @@ async function startStory(base, length) {
       if (!scene) throw new Error(`Scena mancante: ${id}`);
       const handler = scene.type === 'custom' ? (s, c) => s.run(c, s) : (scenes[scene.type] ?? adventure[scene.type]);
       if (!handler) throw new Error(`Tipo di scena sconosciuto: ${scene.type}`);
+      // Scenes with `chance` happen only in some games.
+      if (scene.chance != null && ctx.rng() >= scene.chance) {
+        id = typeof scene.next === 'function' ? scene.next(ctx) : scene.next;
+        continue;
+      }
       const next = await handler(scene, ctx);
+      if (id === 'roles') await adventure.afterRoles(ctx);
       id = story.guard?.(ctx, next) ?? next;
     }
   } catch (err) {

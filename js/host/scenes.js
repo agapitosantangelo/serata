@@ -4,6 +4,7 @@ import {
 } from '../logic.js';
 import { el, sleep } from '../dom.js';
 import { setFlags } from './state.js';
+import { collectBets, stealPhase } from './quiz-extras.js';
 
 const REVEAL_PAUSE_MS = 900;
 const LIKELY_POINTS = 100;
@@ -60,11 +61,12 @@ export const DIFFICULTY = {
  * One multiple-choice question with scoring and reveal. Reused by quiz scenes and boss fights.
  * question.d (1-3) scales points; question.allCorrect makes every answer right (joke bonus questions).
  */
-export async function askQuestion(ctx, question, { time = 20, multiplier = 1, risk = false, kicker, art, onReveal } = {}) {
+export async function askQuestion(ctx, question, { time = 20, multiplier = 1, risk = false, bets = false, steals = false, kicker, art, onReveal } = {}) {
   const q = question.allCorrect ? { ...question, options: shuffle(question.options, ctx.rng), answer: -1 } : shuffleQuestion(question, ctx.rng);
   const diff = DIFFICULTY[question.d];
   const label = question.allCorrect ? '⭐ Domanda bonus' : [kicker, diff?.label].filter(Boolean).join(' · ');
   const mult = multiplier * (diff?.mult ?? 1);
+  const stakes = bets && !question.allCorrect ? await collectBets(ctx, label) : new Map();
   const board = ctx.ui.quizBoard(q.options);
   ctx.ui.show({ art: art ?? null, kicker: label, title: q.q, body: board, layout: art ? 'split' : 'center' });
   ctx.sfx(question.allCorrect ? 'fanfare' : 'whoosh');
@@ -78,15 +80,20 @@ export async function askQuestion(ctx, question, { time = 20, multiplier = 1, ri
     const a = answers.get(pid);
     const ok = question.allCorrect ? a != null : a?.value === q.answer;
     // Risk rounds: a wrong answer costs the base points; not answering is safe.
-    const pts = risk && a && !ok ? -Math.round(QUIZ_BASE_POINTS * mult) : quizPoints(ok, a?.ms ?? time * 1000, time * 1000, mult);
+    const base = risk && a && !ok ? -Math.round(QUIZ_BASE_POINTS * mult) : quizPoints(ok, a?.ms ?? time * 1000, time * 1000, mult);
+    const stake = stakes.get(pid) ?? 0;
+    const pts = base + (ok ? stake : -stake);
     if (ok) correct += 1;
     ctx.addPoints(pid, pts);
     ctx.send(pid, {
       kind: 'result', good: ok, points: pts,
       title: ok ? (question.allCorrect ? 'Tutte giuste, ovviamente! 😂' : 'Giusto!') : a ? 'Sbagliato!' : 'Tempo scaduto!',
-      text: question.allCorrect ? 'Era una domanda bonus.' : `Risposta corretta: ${q.options[q.answer]}`,
+      text: `${question.allCorrect ? 'Era una domanda bonus.' : `Risposta corretta: ${q.options[q.answer]}`}${stake ? ` · puntata ${ok ? 'vinta' : 'persa'}: ${stake}` : ''}`,
     });
   }
+  const fastest = targets
+    .filter((pid) => (question.allCorrect ? answers.has(pid) : answers.get(pid)?.value === q.answer))
+    .sort((x, y) => answers.get(x).ms - answers.get(y).ms)[0];
   const total = targets.length;
   const good = total > 0 && correct * 2 >= total;
   ctx.sfx(good ? 'ding' : 'buzz');
@@ -94,6 +101,7 @@ export async function askQuestion(ctx, question, { time = 20, multiplier = 1, ri
   ctx.ui.banner(`${correct}/${total} giusti`, good ? 'good' : 'bad', 1300);
   await onReveal?.({ correct, total });
   await ctx.advance();
+  if (steals && fastest) await stealPhase(ctx, fastest);
   return { correct, total };
 }
 
@@ -106,6 +114,8 @@ export async function quiz(scene, ctx) {
       time: scene.time ?? 20,
       multiplier: scene.multiplier ?? 1,
       risk: scene.risk ?? false,
+      bets: scene.bets ?? false,
+      steals: scene.steals ?? false,
       kicker: `${val(scene.kicker, ctx) ?? 'Quiz'} · ${i + 1}/${questions.length}`,
       art: question.art ?? val(scene.art, ctx),
     });

@@ -74,3 +74,22 @@ test('shuffleQuestion keeps the correct answer text', () => {
   }
   assert.deepEqual(q.options, ['Roma', 'Milano', 'Napoli', 'Torino']);
 });
+
+test('betAmount is a share of the score with a minimum stake', async () => {
+  const { betAmount, BET_LABELS } = await import('../js/logic.js');
+  assert.equal(BET_LABELS.length, 4);
+  assert.equal(betAmount(2000, 0), 0);
+  assert.equal(betAmount(2000, 1), 500);
+  assert.equal(betAmount(2000, 2), 1000);
+  assert.equal(betAmount(2000, 3), 2000);
+  assert.equal(betAmount(0, 3), 100);
+  assert.equal(betAmount(150, 1), 100);
+  assert.equal(betAmount(2000, 9), 0);
+});
+
+test('stealAmount never takes more than the victim has', async () => {
+  const { stealAmount } = await import('../js/logic.js');
+  assert.equal(stealAmount(1000), 300);
+  assert.equal(stealAmount(120), 120);
+  assert.equal(stealAmount(0), 0);
+});

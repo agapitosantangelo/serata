@@ -190,6 +190,17 @@ async function unmask(ctx) {
   return 'finale';
 }
 
+const SIDES = {
+  traitors: (ctx) => [ctx.state.servant, ...(ctx.state.turned ?? [])].filter(Boolean),
+  loyalWon: (s) => Boolean(s.flags?.dragonAlly) || (s.dragonHp <= 0 && s.hp > 0),
+  extraTraitor: async (ctx, pid) => {
+    if (ctx.state.servant) ctx.setState({ turned: [...(ctx.state.turned ?? []), pid] });
+    else ctx.setState({ servant: pid });
+    ctx.setState({ objectives: { ...ctx.state.objectives, [pid]: DARK_OBJECTIVE } });
+    addCardLines(ctx, pid, ['🐉 Sorpresa: anche tu servi il drago, fin dall’inizio. Non deve morire: sabota le prove e aiutalo in battaglia.', `🎯 Nuovo obiettivo: ${DARK_OBJECTIVE.text}`]);
+  },
+};
+
 const partyName = (ctx) => (ctx.state.lastWrite?.[0] ? `«${ctx.state.lastWrite[0]}»` : 'la vostra compagnia');
 
 const ENDINGS = [
@@ -403,6 +414,7 @@ function build(length) {
     start: 'intro',
     scenes,
     hideScores: true,
+    sides: SIDES,
     initialState: () => ({ hp: MAX_HP, dragonHp: DRAGON_HP, flags: {}, stats: {}, rounds: BATTLE_ROUNDS[length] ?? BATTLE_ROUNDS[30] }),
     hud: (ctx) => {
       const { hp = 0, dragonHp } = ctx.state;

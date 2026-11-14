@@ -147,6 +147,12 @@ async function turnFlier(ctx, pid) {
   addCardLines(ctx, janara.pid, [`🧹 ${tag(ctx.player(pid))} ha accettato il volo: ora vola con te.`]);
 }
 
+const SIDES = {
+  traitors: (ctx) => [ctx.state.janara, ...(ctx.state.turned ?? [])].filter(Boolean),
+  loyalWon: (s) => Boolean(s.flags?.caught) && !s.flags?.groupPact,
+  extraTraitor: async (ctx, pid) => { ctx.setState({ turned: [...(ctx.state.turned ?? []), pid] }); await turnFlier(ctx, pid); },
+};
+
 // ---------- night watches in secret pairs (pool `after`) ----------
 function watchLine(ctx, me, others, clear) {
   if (isJanara(ctx, me.pid)) return [`🌑 Turno con ${others.map(tag).join(' e ')}: sei sgattaiolata via per un’ora. Se ne sarà accorto qualcuno?`];
@@ -488,7 +494,7 @@ function build(length) {
     end: { type: 'end', phoneTitle: 'È spuntata l’alba!' },
   };
   return {
-    start: 'intro', scenes, hideScores: true,
+    start: 'intro', scenes, hideScores: true, sides: SIDES,
     initialState: () => ({ flags: {}, stats: {}, salt: START_SALT, night: 1, exiled: [], exhausted: [], turned: [], whispers: {}, discussSeconds: DISCUSS_SECONDS[length] ?? DISCUSS_SECONDS[30] }),
     hud: (ctx) => {
       const f = flags(ctx);

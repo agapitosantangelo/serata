@@ -136,6 +136,17 @@ async function denounce(ctx) {
   return 'contagiato';
 }
 
+const SIDES = {
+  traitors: (ctx) => [ctx.state.marked, ...touched(ctx)].filter(Boolean),
+  loyalWon: (s) => Boolean(s.flags?.caught),
+  extraTraitor: async (ctx, pid) => {
+    ctx.setState({ touched: [...touched(ctx), pid], objectives: { ...ctx.state.objectives, [pid]: ISLAND_OBJECTIVE } });
+    addCardLines(ctx, pid, ['🖤 L’isola ti ha già toccato, molto prima di stanotte: sei dalla sua parte.',
+      `Il marchiato è ${nameOf(ctx, ctx.state.marked)}. Puoi sabotare le prove.`, `🎯 Nuovo obiettivo: ${ISLAND_OBJECTIVE.text}`]);
+    addCardLines(ctx, ctx.state.marked, [`🖤 Anche ${nameOf(ctx, pid)} appartiene all’isola: è dalla tua parte.`]);
+  },
+};
+
 function touch(ctx, pid) {
   ctx.setState({ touched: [...touched(ctx), pid], objectives: { ...ctx.state.objectives, [pid]: ISLAND_OBJECTIVE } });
   addCardLines(ctx, pid, ['🖤 Coprendo il marchio, l’isola ha toccato anche te. Ora stai dalla sua parte.',
@@ -501,7 +512,7 @@ function build(length) {
   };
   const initialState = () => ({ long, flags: {}, stats: {}, notes: [], exiled: [], touched: [], tide: TIDE_START, discussSeconds: DISCUSS_SECONDS[length] ?? DISCUSS_SECONDS[30] });
   const kept = Object.entries(scenes).filter(([id]) => long || !LONG_ONLY.includes(id));
-  return { start: 'intro', scenes: Object.fromEntries(kept), hideScores: true, initialState, hud };
+  return { start: 'intro', scenes: Object.fromEntries(kept), hideScores: true, sides: SIDES, initialState, hud };
 }
 
 export default {

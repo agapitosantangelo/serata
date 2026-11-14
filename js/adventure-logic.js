@@ -77,3 +77,17 @@ export function computeTitles(stats) {
     return [{ key: t.key, emoji: t.emoji, title: t.title, text: t.text, pids }];
   });
 }
+
+export function rollChance(probability, rng = Math.random) {
+  return rng() < probability;
+}
+
+/** The traitors' final guess of who the Seer is: majority of their votes, random among ties. */
+export function gambitGuess(votes, rng = Math.random) {
+  const counts = new Map();
+  for (const target of votes.values()) if (target) counts.set(target, (counts.get(target) ?? 0) + 1);
+  if (!counts.size) return null;
+  const max = Math.max(...counts.values());
+  const top = [...counts.entries()].filter(([, n]) => n === max).map(([k]) => k);
+  return top[Math.floor(rng() * top.length)];
+}

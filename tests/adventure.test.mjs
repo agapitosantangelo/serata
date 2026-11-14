@@ -102,3 +102,20 @@ test('computeTitles skips titles nobody earned', () => {
   const titles = computeTitles({ a: { help: 0, sabotage: 0, steal: 0, pact: 0, votesAgainst: 0 } });
   assert.equal(titles.length, 0);
 });
+
+test('gambitGuess takes the traitors majority and breaks ties at random among the top', async () => {
+  const { gambitGuess } = await import('../js/adventure-logic.js');
+  assert.equal(gambitGuess(new Map([['t1', 'a'], ['t2', 'a'], ['t3', 'b']]), seededRng(1)), 'a');
+  for (let s = 1; s < 20; s++) {
+    assert.ok(['a', 'b'].includes(gambitGuess(new Map([['t1', 'a'], ['t2', 'b']]), seededRng(s))));
+  }
+  assert.equal(gambitGuess(new Map(), seededRng(1)), null);
+});
+
+test('rollChance is true below the probability', async () => {
+  const { rollChance } = await import('../js/adventure-logic.js');
+  assert.equal(rollChance(1, () => 0.99), true);
+  assert.equal(rollChance(0, () => 0), false);
+  assert.equal(rollChance(0.5, () => 0.2), true);
+  assert.equal(rollChance(0.5, () => 0.7), false);
+});

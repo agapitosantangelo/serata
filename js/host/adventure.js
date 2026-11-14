@@ -3,14 +3,18 @@
 import { el, sleep } from '../dom.js';
 import { pickOne, shuffle, tallyKeys, topKeys } from '../logic.js';
 import {
-  drawDestiny, resolvePool, poolNeed, resolveSplit, mutualPacts, pickEnding, computeTitles, pickTempted,
+  drawDestiny, resolvePool, poolNeed, resolveSplit, mutualPacts, pickEnding, computeTitles, pickTempted, gambitGuess, rollChance,
 } from '../adventure-logic.js';
 import { val, nextOf } from './scenes.js';
 import { setFlags, bump, addCardLines } from './state.js';
 
 const POOL_VALUES = ['help', 'watch', 'sabotage'];
 const POOL_LABELS = ['🤝 Aiuta', '👀 Resta a guardare', '🗡️ Sabota'];
-const POINTS = { help: 100, sabotage: 150, share: 300, steal: 600, objective: 400 };
+const POINTS = { help: 100, sabotage: 150, share: 300, steal: 600, objective: 400, gambitWin: 1000, seerSafe: 500 };
+// Random twists, rolled once per game right after the roles are dealt.
+const EXTRA_TRAITOR_CHANCE = 0.35;
+const EXTRA_TRAITOR_MIN_PLAYERS = 5;
+const SEER_CHANCE = 0.5;
 
 const nameOf = (p) => `${p.avatar} ${p.name}`;
 
@@ -227,19 +231,99 @@ export async function exile(scene, ctx) {
   ctx.setState({ exiled: [...(ctx.state.exiled ?? []), chosen.pid] });
   const voters = [...valid].filter(([, a]) => a.value === chosen.pid).map(([pid]) => pid);
   await scene.onExile?.(ctx, chosen.pid, voters);
-  ctx.send(chosen.pid, { kind: 'wait', icon: '🚪', text: val(scene.exiledPhone, ctx) ?? 'Sei stato lasciato fuori. Niente più prove di gruppo, ma voterai alla fine.' });
+  ctx.send(chosen.pid, { kind: 'wait', icon: '🚪', text: val(scene.exiledPhone, ctx) ?? 'Resti fuori dal gruppo. Niente più prove di gruppo, ma voterai alla fine.' });
   ctx.ui.show({ art: val(scene.art, ctx), kicker: val(scene.kicker, ctx) ?? 'Una decisione difficile', title: `${chosen.avatar} ${chosen.name}: ${val(scene.resultTitle, ctx) ?? 'lasciato indietro'}`, text: val(scene.resultText, ctx, chosen) });
   ctx.sfx('hit');
   await ctx.advance();
   return nextOf(scene, ctx, chosen.pid);
 }
 
+const listNames = (ctx, pids) => pids.map((pid) => ctx.player(pid)?.name).filter(Boolean).join(', ');
+
+/**
+ * Called by the runner after a story's `roles` scene, for stories that declare `sides`
+ * ({ traitors(ctx), loyalWon(state), extraTraitor(ctx, pid) }). Randomly adds a second hidden
+ * traitor (uncertain count) and a Seer who knows the traitors (Avalon-style final twist).
+ */
+export async function afterRoles(ctx) {
+  const sides = ctx.story.sides;
+  if (!sides) return;
+  const loyalOf = () => ctx.active().filter((p) => !sides.traitors(ctx).includes(p.pid));
+  if (ctx.active().length >= EXTRA_TRAITOR_MIN_PLAYERS && rollChance(EXTRA_TRAITOR_CHANCE, ctx.rng) && loyalOf().length > 2) {
+    await sides.extraTraitor(ctx, pickOne(loyalOf(), ctx.rng).pid);
+  }
+  let seer = null;
+  if (rollChance(SEER_CHANCE, ctx.rng) && loyalOf().length) {
+    seer = pickOne(loyalOf(), ctx.rng).pid;
+    const traitors = sides.traitors(ctx);
+    ctx.setState({ seer });
+    addCardLines(ctx, seer, [
+      traitors.length
+        ? `👁️ Sei il Veggente: sai che ${listNames(ctx, traitors)} ${traitors.length > 1 ? 'non sono' : 'non è'} dalla vostra parte.`
+        : '👁️ Sei il Veggente: per ora nessuno è un traditore. Ma tieni gli occhi aperti.',
+      'Guida gli altri senza farti scoprire: se i leali vincono, i traditori avranno un’ultima occasione per indovinare chi sei.',
+    ]);
+    for (const pid of traitors) {
+      addCardLines(ctx, pid, ['👁️ Tra i leali c’è un Veggente che sa chi sei. Se perdete, indovinate chi è e la vittoria sarà vostra.']);
+    }
+  }
+  ctx.ui.show({
+    kicker: 'Attenzione', title: 'Nessuno è al sicuro',
+    text: `I traditori stanotte potrebbero essere più di uno… o forse no.${seer ? ' E tra voi c’è un Veggente che vede più degli altri: se lo scoprono, sono guai.' : ''}`,
+    layout: 'center',
+  });
+  ctx.sfx('reveal');
+  await ctx.advance({ phone: 'Ricontrolla la tua carta 🔒: potrebbe esserci qualcosa di nuovo' });
+}
+
+/** Avalon-style last twist: if the loyal side won, the traitors try to name the Seer. */
+async function gambit(ctx) {
+  const sides = ctx.story.sides;
+  const { seer } = ctx.state;
+  const traitors = sides.traitors(ctx).filter((pid) => ctx.player(pid)?.connected);
+  if (!seer || !traitors.length || !sides.loyalWon(ctx.state)) return;
+  const candidates = ctx.players().filter((p) => !traitors.includes(p.pid));
+  const board = ctx.ui.pickBoard(candidates);
+  ctx.ui.show({
+    kicker: 'Ultimo colpo di scena', title: 'Chi è il Veggente?',
+    text: `I traditori (${listNames(ctx, traitors)}) hanno un’ultima occasione: se indovinano chi è il Veggente, la vittoria è loro.`,
+    body: board, layout: 'center',
+  });
+  ctx.flash();
+  ctx.sfx('drum');
+  const options = candidates.map(({ pid, name, avatar }) => ({ pid, name, avatar }));
+  const { answers } = await ctx.collect({ time: 45, players: traitors.map((pid) => ctx.player(pid)), screen: { kind: 'players', title: 'Chi è il Veggente?', options } });
+  const votes = new Map([...answers].map(([pid, a]) => [pid, a.value]));
+  const guess = gambitGuess(votes, ctx.rng) ?? pickOne(candidates, ctx.rng).pid;
+  const hit = guess === seer;
+  setFlags(ctx, { stolen: hit });
+  if (hit) for (const pid of traitors) ctx.addPoints(pid, POINTS.gambitWin);
+  else ctx.addPoints(seer, POINTS.seerSafe);
+  await sleep(1800);
+  const guessed = ctx.player(guess);
+  const real = ctx.player(seer);
+  ctx.ui.show({
+    kicker: `Indicano ${guessed.avatar} ${guessed.name}…`,
+    title: hit ? `${guessed.name} ERA il Veggente!` : `Sbagliato: il Veggente era ${real.name}!`,
+    text: hit ? 'Con un ghigno, i traditori si prendono la vittoria all’ultimo secondo.' : 'Il Veggente resta al sicuro: la vittoria dei leali è salva.',
+  });
+  ctx.flash();
+  ctx.sfx(hit ? 'reveal' : 'fanfare');
+  await ctx.advance({ phone: 'Guarda lo schermo 👀' });
+}
+
+const STOLEN_ENDING = {
+  id: 'stolen', name: 'Il colpo di coda', when: (s) => s.flags?.stolen, sad: true,
+  title: 'La vittoria cambia padrone',
+  text: 'All’ultimo istante i traditori hanno smascherato il Veggente. Tutto quello che avevate conquistato scivola nelle loro mani.',
+};
+
 function epilogueBoard(ctx, scene) {
   return ctx.ui.playerCards(ctx.players(), (p) => {
     const objective = ctx.state.objectives?.[p.pid];
     const done = ctx.state.objectiveResults?.[p.pid];
     return el('ul', { class: 'epilogue' },
-      el('li', {}, val(scene.roleOf, ctx, p.pid) ?? ''),
+      el('li', {}, `${val(scene.roleOf, ctx, p.pid) ?? ''}${ctx.state.seer === p.pid ? ' · 👁️ Veggente' : ''}`),
       objective ? el('li', {}, `${done ? '✔' : '✘'} ${objective.text}${done && (objective.points ?? POINTS.objective) > 0 ? ` (+${objective.points ?? POINTS.objective})` : ''}`) : null,
       scene.epilogue ? el('li', {}, val(scene.epilogue, ctx, p.pid)) : null);
   });
@@ -257,7 +341,8 @@ function titlesBoard(ctx) {
 
 /** Pick the ending from accumulated flags, then objectives, per-player epilogues and titles. */
 export async function ending(scene, ctx) {
-  const chosen = pickEnding(scene.endings, ctx.state);
+  if (ctx.story.sides) await gambit(ctx);
+  const chosen = pickEnding([{ ...STOLEN_ENDING, art: scene.stolenArt ?? scene.endings.at(-1).art }, ...scene.endings], ctx.state);
   setFlags(ctx, { ending: chosen.id });
   await chosen.effect?.(ctx);
   ctx.ui.show({ art: val(chosen.art, ctx), kicker: `Finale: ${val(chosen.name, ctx)}`, title: val(chosen.title, ctx), text: val(chosen.text, ctx) });

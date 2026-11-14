@@ -19,6 +19,11 @@ for (const story of STORIES) {
     test(`${story.id} (${length} min) has a valid scene graph`, () => {
       const game = story.build(length);
       assert.ok(game.scenes[game.start], 'start scene exists');
+      if (game.scenes.roles) {
+        assert.equal(typeof game.sides?.traitors, 'function', 'adventures declare sides.traitors');
+        assert.equal(typeof game.sides?.loyalWon, 'function', 'adventures declare sides.loyalWon');
+        assert.equal(typeof game.sides?.extraTraitor, 'function', 'adventures declare sides.extraTraitor');
+      }
       for (const [id, scene] of Object.entries(game.scenes)) {
         assert.ok(KNOWN_TYPES.has(scene.type), `${id}: unknown type ${scene.type}`);
         if (scene.type === 'custom') assert.equal(typeof scene.run, 'function', `${id}: custom needs run`);

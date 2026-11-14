@@ -311,6 +311,38 @@ async function accuse(ctx) {
   return 'finale';
 }
 
+async function makeAccomplice(ctx, pid) {
+  const culprit = ctx.player(ctx.state.g.culprit);
+  const me = ctx.player(pid);
+  ctx.sendCard(pid, {
+    tone: 'danger', title: '🤝 SEI IL COMPLICE',
+    lines: [
+      `Il colpevole è ${culprit.avatar} ${culprit.name}.`,
+      'Obiettivo: il colpevole NON deve essere arrestato. Se ce la fate, il testamento è tuo.',
+      'Puoi sabotare le perquisizioni anche tu.',
+      ...profileLines(ctx.state.g.traits[pid]),
+    ],
+  });
+  ctx.setState({ objectives: { ...ctx.state.objectives, [pid]: { id: 'accomplice', text: 'Il colpevole non deve essere arrestato', check: (c) => !c.state.flags?.caught, points: 0 } } });
+  addCardLines(ctx, culprit.pid, [`🤝 Hai un complice: ${me.avatar} ${me.name}. Coprite l’uno le tracce dell’altro.`]);
+}
+
+async function redeemAccomplice(ctx, pid) {
+  const culprit = ctx.player(ctx.state.g.culprit);
+  ctx.setState({
+    turned: (ctx.state.turned ?? []).filter((x) => x !== pid),
+    objectives: { ...ctx.state.objectives, [pid]: { id: 'redeemed', text: 'Fai arrestare il colpevole', check: (c) => Boolean(c.state.flags?.caught) } },
+  });
+  addCardLines(ctx, pid, ['🕊️ Hai stracciato l’accordo con l’avvocato: sei di nuovo dalla parte degli innocenti.', `Sai che il colpevole è ${culprit.name}: aiuta gli altri a capirlo, senza farti smascherare troppo presto.`]);
+  addCardLines(ctx, culprit.pid, ['🕊️ Il tuo complice ti ha abbandonato. Adesso sei solo… e lui sa tutto.']);
+}
+
+const SIDES = {
+  traitors: (ctx) => [ctx.state.g?.culprit, ...(ctx.state.turned ?? [])].filter(Boolean),
+  loyalWon: (s) => Boolean(s.flags?.caught),
+  extraTraitor: async (ctx, pid) => { ctx.setState({ turned: [...(ctx.state.turned ?? []), pid] }); await makeAccomplice(ctx, pid); },
+};
+
 // ---------- endings ----------
 const ENDINGS = [
   {
@@ -440,21 +472,7 @@ function build(length) {
       offerTitle: 'L’avvocato del Barone',
       offerText: 'Il testamento lascia tutto agli ospiti… solo se il colpevole NON viene arrestato. Diventa complice: saprai chi è stato e avrai la tua parte.',
       cap: 1,
-      onAccept: async (ctx, pid) => {
-        const culprit = ctx.player(ctx.state.g.culprit);
-        const me = ctx.player(pid);
-        ctx.sendCard(pid, {
-          tone: 'danger', title: '🤝 SEI IL COMPLICE',
-          lines: [
-            `Il colpevole è ${culprit.avatar} ${culprit.name}.`,
-            'Obiettivo: il colpevole NON deve essere arrestato. Se ce la fate, il testamento è tuo.',
-            'Da ora puoi sabotare le perquisizioni anche tu.',
-            ...profileLines(ctx.state.g.traits[pid]),
-          ],
-        });
-        ctx.setState({ objectives: { ...ctx.state.objectives, [pid]: { id: 'accomplice', text: 'Il colpevole non deve essere arrestato', check: (c) => !c.state.flags?.caught, points: 0 } } });
-        addCardLines(ctx, culprit.pid, [`🤝 Hai un complice: ${me.avatar} ${me.name}. Coprite l’uno le tracce dell’altro.`]);
-      },
+      onAccept: makeAccomplice,
       next: long ? 'witness' : 'room2',
     },
     witness: { type: 'custom', run: witness },
@@ -476,6 +494,16 @@ function build(length) {
         'b-steals': (ctx, { thief }) => `${thief.name} infila il diario in tasca. Chissà chi ricatterà domani.`,
         'both-steal': 'Ve lo strappate di mano e il diario finisce a pezzi nel camino. Nessuno saprà cosa c’era scritto.',
       },
+      next: 'redeem',
+    },
+    redeem: {
+      type: 'tempt', art: 'villa', chance: 0.6, title: 'Una seconda possibilità',
+      who: (ctx) => ctx.active().filter((p) => isAccomplice(ctx, p.pid)),
+      publicText: 'Il temporale si calma per un istante. Chi ha qualcosa sulla coscienza potrebbe ricevere un messaggio…',
+      offerTitle: 'Stracciare l’accordo?',
+      offerText: 'Puoi rinnegare l’avvocato e tornare innocente: dovrai aiutare gli altri a far arrestare il colpevole.',
+      cap: 2,
+      onAccept: redeemAccomplice,
       next: long ? 'likely2' : 'discuss',
     },
     likely2: { type: 'likely', art: 'accusa', title: 'sia il vero colpevole? (sondaggio a caldo)', next: 'discuss' },
@@ -490,6 +518,7 @@ function build(length) {
     start: 'intro',
     scenes,
     hideScores: true,
+    sides: SIDES,
     initialState: () => ({ clues: [], flags: {}, stats: {}, discussSeconds: DISCUSS_SECONDS[length] ?? DISCUSS_SECONDS[30], totalClues: long ? 3 : 2 }),
     hud: (ctx) => `🔍 Indizi: ${ctx.state.clues?.filter((c) => !c.planted && !c.bonus).length ?? 0}/${ctx.state.totalClues}${ctx.state.clues?.some((c) => c.bonus) ? ' +1' : ''}${ctx.state.flags?.called ? ' · 📞' : ''}${ctx.state.flags?.locked ? ' · 🔒' : ''}`,
   };

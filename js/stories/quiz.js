@@ -217,7 +217,7 @@ function insertBonuses(rounds, count) {
   return withBonus;
 }
 
-function build(length) {
+function build(length, options = {}) {
   const plan = PLAN[length] ?? PLAN[30];
   const chosen = shuffle(CATEGORIES).slice(0, plan.rounds);
   const rounds = insertBonuses(chosen.map((c) => ({ ...c, questions: pickRound(c, plan.mix) })), plan.bonus);
@@ -247,6 +247,7 @@ function build(length) {
     scenes[`r${i}q`] = {
       type: 'quiz', kicker: `${special ? `${mod.emoji} ` : ''}${round.emoji} ${round.title}`, questions: round.questions,
       time: mod.time ?? 20, multiplier: mod.multiplier ?? 1, risk: mod.risk ?? false,
+      bets: Boolean(options.bets), steals: Boolean(options.steals),
       next: i === last ? 'end' : `r${i}lb`,
     };
     if (i < last) scenes[`r${i}lb`] = { type: 'leaderboard', kicker: `Fine round ${i + 1}`, title: 'Classifica provvisoria', next: `r${i + 1}` };
@@ -273,5 +274,9 @@ export default {
   cover: 'stage',
   theme: 'quiz',
   minPlayers: 1,
+  options: [
+    { id: 'bets', label: '💰 Scommesse', hint: 'Prima di ogni domanda si punta una parte dei propri punti' },
+    { id: 'steals', label: '🦹 Furti', hint: 'Il più veloce a rispondere giusto ruba punti a un avversario' },
+  ],
   build,
 };

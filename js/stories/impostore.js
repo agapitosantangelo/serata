@@ -96,7 +96,7 @@ async function lastChance(ctx, impostor, category) {
   const p = ctx.player(impostor);
   ctx.ui.show({
     art: 'mask', kicker: 'Ultima chance', title: `${p.avatar} ${p.name}, indovina la parola!`,
-    text: `Sei stato scoperto… ma se indovini la parola segreta (categoria: ${category}) ti salvi lo stesso!`,
+    text: `Ti hanno scoperto… ma se indovini la parola segreta (categoria: ${category}) ti salvi lo stesso!`,
   });
   ctx.sfx('reveal');
   const { answers } = await ctx.collect({

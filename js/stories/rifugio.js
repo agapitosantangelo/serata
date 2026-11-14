@@ -215,6 +215,12 @@ async function turn(ctx, pid) {
   addCardLines(ctx, g.cosa, [`❄️ ${nameOf(ctx.player(pid))} si è unito a te. Copritevi a vicenda.`]);
 }
 
+const SIDES = {
+  traitors: (ctx) => [ctx.state.g?.cosa, ...(ctx.state.turned ?? [])].filter(Boolean),
+  loyalWon: (s) => Boolean(s.flags?.cosaOut),
+  extraTraitor: async (ctx, pid) => { ctx.setState({ turned: [...(ctx.state.turned ?? []), pid] }); await turn(ctx, pid); },
+};
+
 async function redemption(ctx) {
   const { g } = ctx.state;
   ctx.ui.show({ art: 'rifAlba', kicker: 'Uno spiraglio', title: 'La luna entra dalla finestra', text: 'Per un attimo la tormenta si apre. Chi ha il cuore gelato sente qualcosa sciogliersi. Tutti: guardate il telefono e scegliete, senza farvi vedere.' });
@@ -485,6 +491,7 @@ function build(length) {
   const size = long ? 60 : 30;
   return {
     start: 'intro',
+    sides: SIDES,
     scenes,
     hideScores: true,
     initialState: () => ({ flags: {}, stats: {}, knocks: [], translators: [], exiled: [], turned: [], redeemed: [], ...START[size], discussSeconds: DISCUSS_SECONDS[size] }),

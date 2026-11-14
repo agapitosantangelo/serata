@@ -86,3 +86,20 @@ export function shuffleQuestion(question, rng = Math.random) {
     answer: order.indexOf(question.answer),
   };
 }
+
+// ---------- Quiz options: bets and steals ----------
+export const BET_LABELS = ['🙅 Niente', '🪙 Un quarto', '💰 Metà', '🎲 Tutto'];
+const BET_SHARES = [0, 0.25, 0.5, 1];
+export const MIN_BET = 100;
+export const STEAL_POINTS = 300;
+
+/** Points at stake for a bet choice: a share of the current score, at least MIN_BET if betting at all. */
+export function betAmount(score, choice) {
+  const share = BET_SHARES[choice] ?? 0;
+  if (!share) return 0;
+  return Math.max(MIN_BET, Math.floor(score * share));
+}
+
+export function stealAmount(victimScore) {
+  return Math.max(0, Math.min(STEAL_POINTS, victimScore));
+}

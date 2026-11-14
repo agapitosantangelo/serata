@@ -61,6 +61,9 @@ body[data-theme='giallo'] .scene__art { filter: sepia(0.15); }
 .story-card { display: grid; grid-template-columns: 40% 1fr; }
 .story-card__art { aspect-ratio: auto; height: 100%; min-height: 9rem; overflow: hidden; display: flex; justify-content: center; }
 .story-card__art .art { height: 100%; width: auto; flex: none; }
+.story-card__options { display: flex; flex-wrap: wrap; gap: 0.4rem 0.9rem; margin-top: 0.5rem; font-weight: 800; font-size: 0.9rem; }
+.story-option { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+.story-option input { width: 1.1rem; height: 1.1rem; accent-color: var(--accent); }
 .story-card__lengths { display: flex; gap: 0.5rem; margin-top: 0.6rem; }
 .story-card__lengths .btn { padding: 0.5em 1em; font-size: 0.95rem; }
 .story-card__body { padding: 0.9rem 1rem 1.1rem; }
