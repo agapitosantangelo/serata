@@ -12,6 +12,6 @@ Gioco di società per una serata tra amici: uno schermo condiviso (PC/TV) raccon
    - *Quiz Show*: circa 300 domande facili, medie e difficili, round a sorpresa (punti doppi, lampo, a rischio) e domande bonus (1+).
    - *L’Impostore*: tutti conoscono la parola segreta tranne uno (3+).
 
-Funziona senza server: i telefoni si collegano allo schermo in peer-to-peer (WebRTC via PeerJS, con relay pubblico se la rete lo richiede). Tieni aperta la pagina dello schermo per tutta la partita.
+Funziona senza server: i telefoni si collegano allo schermo in peer-to-peer (WebRTC via PeerJS). **Collegate tutti i telefoni al Wi‑Fi dello schermo**: i relay pubblici gratuiti di PeerJS non esistono più, quindi da rete mobile (4G/5G) la connessione può non riuscire. Tieni aperta la pagina dello schermo per tutta la partita.
 
 Test della logica: `node --test tests/*.test.mjs`

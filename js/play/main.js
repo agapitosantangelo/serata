@@ -98,6 +98,11 @@ function connect() {
   });
 }
 
+// Phones on mobile data often can't reach the host directly (no public TURN relay is available):
+// after a while, suggest switching to the home Wi-Fi.
+const SLOW_CONNECT_MS = 12000;
+let slowTimer = null;
+
 function renderStatus(status) {
   const box = $('#status');
   const text = {
@@ -107,6 +112,13 @@ function renderStatus(status) {
   }[status];
   box.hidden = !text;
   box.textContent = text ?? '';
+  if (status === 'open') { clearTimeout(slowTimer); slowTimer = null; return; }
+  if (!slowTimer) {
+    slowTimer = setTimeout(() => {
+      box.hidden = false;
+      box.textContent = 'Non riesco a collegarmi. Se sei in 4G/5G, collegati al Wi‑Fi dello schermo e ricarica la pagina.';
+    }, SLOW_CONNECT_MS);
+  }
 }
 
 // ---------- messages from host ----------
