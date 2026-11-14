@@ -5,6 +5,7 @@ const BOKEH_COLORS = {
   lobby: ['#7b5cff', '#ff4fb8', '#33d6ff'],
   quiz: ['#ff2fb3', '#26e3ff', '#ffd400'],
   impostore: ['#ff3b5c', '#3bd5ff', '#ffffff'],
+  horror: ['#8fa79a', '#5c6b66', '#b9c4bd'],
 };
 
 let canvas = null;
@@ -43,7 +44,7 @@ export function setFxMode(next) {
 const rand = (a, b) => a + Math.random() * (b - a);
 
 function spawn() {
-  const target = { giallo: 260, fantasy: 90, quiz: 26, lobby: 22, impostore: 22 }[mode] ?? 0;
+  const target = { giallo: 260, fantasy: 90, quiz: 26, lobby: 22, impostore: 22, horror: 16 }[mode] ?? 0;
   const scaled = reduceMotion ? Math.round(target / 4) : target;
   while (particles.length < scaled) {
     if (mode === 'giallo') {
@@ -110,6 +111,18 @@ function drawBokeh() {
   }
 }
 
+let nextFlicker = 0;
+function maybeFlicker() {
+  const now = performance.now();
+  if (!nextFlicker) nextFlicker = now + rand(12000, 25000);
+  if (now < nextFlicker) return;
+  nextFlicker = now + rand(15000, 35000);
+  document.body.classList.remove('flicker');
+  void document.body.offsetWidth;
+  document.body.classList.add('flicker');
+  play('thunder');
+}
+
 function hexA(hex, alpha) {
   const n = parseInt(hex.slice(1), 16);
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
@@ -139,6 +152,7 @@ function loop(t) {
   if (mode === 'giallo') drawRain();
   else if (mode === 'fantasy') drawEmbers(t);
   else drawBokeh();
+  if (mode === 'horror') maybeFlicker();
   drawConfetti();
   requestAnimationFrame(loop);
 }

@@ -28,6 +28,14 @@ body[data-theme='impostore'] {
   --accent: #ff3b5c; --accent2: #3bd5ff; --gold: #ffd166;
   --font-title: 'Bungee', system-ui, sans-serif;
 }
+body[data-theme='horror'] {
+  --bg: #07090a; --bg2: #1a2220; --fg: #e8e2d4; --muted: #a59f90;
+  --panel: rgba(232, 226, 212, 0.05); --panel-border: rgba(160, 190, 170, 0.28);
+  --accent: #b9d6c2; --accent2: #8a1c1c; --gold: #d8c58a;
+  --font-title: 'IM Fell English SC', Georgia, serif;
+}
+body[data-theme='horror'].flicker #app { animation: lights-flicker 1.4s steps(1) 1; }
+@keyframes lights-flicker { 0% { opacity: 1; } 10% { opacity: 0.25; } 14% { opacity: 1; } 30% { opacity: 0.1; } 34% { opacity: 0.9; } 60% { opacity: 0.35; } 64%, 100% { opacity: 1; } }
 body[data-theme='quiz'] {
   --bg: #0b0630; --bg2: #2b0a5e; --fg: #ffffff; --muted: #c6b8ff;
   --accent: #ff2fb3; --accent2: #26e3ff; --gold: #ffd400;

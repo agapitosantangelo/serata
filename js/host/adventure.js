@@ -1,7 +1,7 @@
 // Adventure engine scene handlers: pooled tests, spotlight choices, alliances,
 // split or steal, temptations and data-driven endings. Each resolves to the next scene id.
 import { el, sleep } from '../dom.js';
-import { pickOne, shuffle } from '../logic.js';
+import { pickOne, shuffle, tallyKeys, topKeys } from '../logic.js';
 import {
   drawDestiny, resolvePool, poolNeed, resolveSplit, mutualPacts, pickEnding, computeTitles, pickTempted,
 } from '../adventure-logic.js';
@@ -190,6 +190,48 @@ export async function tempt(scene, ctx) {
   ctx.flash();
   await ctx.advance({ phone: 'Guarda lo schermo 👀' });
   return nextOf(scene, ctx, chosen);
+}
+
+/**
+ * Optional exile: the group first decides whether to leave someone out, then picks who.
+ * Exiled players are listed in state.exiled (stories skip them in pools) but still vote at the end.
+ */
+export async function exile(scene, ctx) {
+  const players = ctx.active().filter((p) => !(ctx.state.exiled ?? []).includes(p.pid));
+  const decide = ctx.ui.voteBoard([val(scene.yes, ctx) ?? 'Sì', val(scene.no, ctx) ?? 'No']);
+  ctx.ui.show({ art: val(scene.art, ctx), kicker: val(scene.kicker, ctx) ?? 'Una decisione difficile', title: val(scene.title, ctx), text: val(scene.text, ctx), body: decide });
+  const { answers } = await ctx.collect({ time: 25, screen: { kind: 'choice', style: 'vote', title: val(scene.title, ctx), options: [val(scene.yes, ctx) ?? 'Sì', val(scene.no, ctx) ?? 'No'] } });
+  const yes = [...answers.values()].filter((a) => a.value === 0).length;
+  const no = answers.size - yes;
+  ctx.ui.revealVote(decide, [yes, no], yes > no ? 0 : 1);
+  await sleep(1500);
+  if (yes <= no) { await ctx.advance(); return nextOf(scene, ctx, null); }
+  const board = ctx.ui.pickBoard(players);
+  ctx.ui.show({ kicker: val(scene.kicker, ctx) ?? 'Una decisione difficile', title: val(scene.pickTitle, ctx) ?? 'Chi?', body: board, layout: 'center' });
+  const options = players.map(({ pid, name, avatar }) => ({ pid, name, avatar }));
+  const { answers: votes } = await ctx.collect({
+    time: 35,
+    screenFor: (p) => ({ kind: 'players', title: val(scene.pickTitle, ctx) ?? 'Chi?', options: options.filter((o) => o.pid !== p.pid) }),
+  });
+  const valid = new Map([...votes].filter(([pid, a]) => a.value !== pid));
+  const counts = tallyKeys(valid, players.map((p) => p.pid));
+  const top = topKeys(counts);
+  ctx.ui.revealPick(board, counts, top);
+  await sleep(1800);
+  if (top.length !== 1) {
+    await ctx.ui.banner('Pareggio: nessuno viene lasciato indietro', 'neutral', 1800);
+    await ctx.advance();
+    return nextOf(scene, ctx, null);
+  }
+  const chosen = ctx.player(top[0]);
+  ctx.setState({ exiled: [...(ctx.state.exiled ?? []), chosen.pid] });
+  const voters = [...valid].filter(([, a]) => a.value === chosen.pid).map(([pid]) => pid);
+  await scene.onExile?.(ctx, chosen.pid, voters);
+  ctx.send(chosen.pid, { kind: 'wait', icon: '🚪', text: val(scene.exiledPhone, ctx) ?? 'Sei stato lasciato fuori. Niente più prove di gruppo, ma voterai alla fine.' });
+  ctx.ui.show({ art: val(scene.art, ctx), kicker: val(scene.kicker, ctx) ?? 'Una decisione difficile', title: `${chosen.avatar} ${chosen.name}: ${val(scene.resultTitle, ctx) ?? 'lasciato indietro'}`, text: val(scene.resultText, ctx, chosen) });
+  ctx.sfx('hit');
+  await ctx.advance();
+  return nextOf(scene, ctx, chosen.pid);
 }
 
 function epilogueBoard(ctx, scene) {

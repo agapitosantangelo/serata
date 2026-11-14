@@ -249,7 +249,7 @@ function build(length) {
       time: mod.time ?? 20, multiplier: mod.multiplier ?? 1, risk: mod.risk ?? false,
       next: i === last ? 'end' : `r${i}lb`,
     };
-    scenes[`r${i}lb`] = { type: 'leaderboard', kicker: `Fine round ${i + 1}`, title: 'Classifica provvisoria', next: `r${i + 1}` };
+    if (i < last) scenes[`r${i}lb`] = { type: 'leaderboard', kicker: `Fine round ${i + 1}`, title: 'Classifica provvisoria', next: `r${i + 1}` };
   });
   scenes.end = {
     type: 'end',

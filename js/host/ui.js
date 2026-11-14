@@ -166,8 +166,8 @@ export function createUI() {
   }
 
   /** Face-down cards flipped one by one: 'help' | 'watch' | 'sabotage'. */
-  async function poolReveal(container, cards) {
-    const FACE = { help: ['🤝', 'Aiuto'], watch: ['👀', 'Guarda'], sabotage: ['🗡️', 'Sabotaggio'] };
+  async function poolReveal(container, cards, faces) {
+    const FACE = faces ?? { help: ['🤝', 'Aiuto'], watch: ['👀', 'Guarda'], sabotage: ['🗡️', 'Sabotaggio'] };
     const row = el('div', { class: 'pool-cards' }, cards.map(() => el('div', { class: 'pool-card' }, el('span', { class: 'pool-card__back' }, '?'))));
     container.append(row);
     for (const [i, kind] of cards.entries()) {
