@@ -101,24 +101,28 @@ function connect() {
 // Phones on mobile data often can't reach the host directly (no public TURN relay is available):
 // after a while, suggest switching to the home Wi-Fi.
 const SLOW_CONNECT_MS = 12000;
+const WIFI_HINT = 'Se sei in 4G/5G, collegati al Wi‑Fi dello schermo e ricarica la pagina.';
 let slowTimer = null;
+let isSlow = false;
+let lastStatus = null;
 
 function renderStatus(status) {
+  lastStatus = status;
   const box = $('#status');
   const text = {
     connecting: 'Connessione…',
     lost: 'Connessione persa, riprovo…',
     noroom: `Stanza ${code} non trovata. Controlla il codice sullo schermo… riprovo`,
   }[status];
-  box.hidden = !text;
-  box.textContent = text ?? '';
-  if (status === 'open') { clearTimeout(slowTimer); slowTimer = null; return; }
-  if (!slowTimer) {
-    slowTimer = setTimeout(() => {
-      box.hidden = false;
-      box.textContent = 'Non riesco a collegarmi. Se sei in 4G/5G, collegati al Wi‑Fi dello schermo e ricarica la pagina.';
-    }, SLOW_CONNECT_MS);
+  if (status === 'open') {
+    clearTimeout(slowTimer);
+    slowTimer = null;
+    isSlow = false;
+  } else if (!slowTimer && !isSlow) {
+    slowTimer = setTimeout(() => { isSlow = true; slowTimer = null; renderStatus(lastStatus); }, SLOW_CONNECT_MS);
   }
+  box.hidden = !text;
+  box.textContent = text ? `${text}${isSlow ? ` ${WIFI_HINT}` : ''}` : '';
 }
 
 // ---------- messages from host ----------
