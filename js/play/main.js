@@ -198,7 +198,7 @@ const RENDERERS = {
       class: `choice opt-${i}`,
       onclick: (e) => { lockButtons(list, e.currentTarget); answer(s.sid, i); },
     }, s.style === 'quiz' ? el('span', { class: 'letter' }, LETTERS[i]) : null, el('span', {}, text))));
-    return [el('h2', { class: 'q-title' }, s.title), list];
+    return [el('h2', { class: 'q-title' }, s.title), s.text ? el('p', { class: 'choice-text' }, s.text) : null, list];
   },
 
   players: (s) => {

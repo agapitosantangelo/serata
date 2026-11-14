@@ -165,6 +165,37 @@ export function createUI() {
     node.remove();
   }
 
+  /** Face-down cards flipped one by one: 'help' | 'watch' | 'sabotage'. */
+  async function poolReveal(container, cards) {
+    const FACE = { help: ['🤝', 'Aiuto'], watch: ['👀', 'Guarda'], sabotage: ['🗡️', 'Sabotaggio'] };
+    const row = el('div', { class: 'pool-cards' }, cards.map(() => el('div', { class: 'pool-card' }, el('span', { class: 'pool-card__back' }, '?'))));
+    container.append(row);
+    for (const [i, kind] of cards.entries()) {
+      await sleep(450);
+      const node = row.children[i];
+      node.classList.add('is-flipped', `pool-card--${kind}`);
+      node.replaceChildren(el('span', { class: 'pool-card__icon' }, FACE[kind][0]), el('span', { class: 'pool-card__label' }, FACE[kind][1]));
+      play(kind === 'sabotage' ? 'hit' : 'pop');
+    }
+    return row;
+  }
+
+  async function splitReveal(container, sides) {
+    const row = el('div', { class: 'split-row' }, sides.map(({ player, choice }) => el('div', { class: 'split-side' },
+      el('div', { class: 'split-side__who' }, `${player.avatar} ${player.name}`),
+      el('div', { class: 'split-card', 'data-choice': choice }, '?'))));
+    container.append(row);
+    play('drum');
+    await sleep(1800);
+    for (const card of row.querySelectorAll('.split-card')) {
+      const steal = card.dataset.choice === 'steal';
+      card.classList.add('is-flipped', steal ? 'is-steal' : 'is-share');
+      card.textContent = steal ? '💰 RUBA' : '🤝 DIVIDE';
+    }
+    play('reveal');
+    return row;
+  }
+
   function leaderboard(ranked, max = 10) {
     const top = Math.max(1, ranked[0]?.score ?? 1);
     return el('ol', { class: 'leaderboard' }, ranked.slice(0, max).map((p, i) => el('li', { class: 'lb-row', style: { animationDelay: `${(Math.min(ranked.length, max) - i) * 0.12}s` } },
@@ -198,7 +229,7 @@ export function createUI() {
 
   return {
     show, timer, quizBoard, revealQuiz, revealAll, voteBoard, revealVote, pickBoard, revealPick,
-    answersBoard, revealAnswers, banner, shake, dice, leaderboard, podium, playerCards, clueCard,
+    answersBoard, revealAnswers, poolReveal, splitReveal, banner, shake, dice, leaderboard, podium, playerCards, clueCard,
   };
 }
 

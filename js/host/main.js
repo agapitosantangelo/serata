@@ -6,6 +6,7 @@ import { initFx, setFxMode, confettiBurst, flash, unlockAudio, play, toggleMute 
 import { art } from '../art.js';
 import { createUI } from './ui.js';
 import * as scenes from './scenes.js';
+import * as adventure from './adventure.js';
 import { STORIES } from '../stories/index.js';
 
 const ROOM_KEY = 'serata.host.room';
@@ -25,6 +26,7 @@ let pending = null;
 let advanceWaiter = null;
 let sidCounter = 0;
 let running = false;
+let hideScores = false;
 const ui = createUI();
 
 // ---------- players ----------
@@ -205,7 +207,7 @@ function renderRoster() {
   $('#roster').replaceChildren(...players.map((p) => el('div', {
     class: `chip ${p.connected ? '' : 'is-offline'}`, 'data-pid': p.pid, title: p.connected ? '' : 'disconnesso',
   }, el('span', { class: 'chip__avatar' }, p.avatar), el('span', { class: 'chip__name' }, p.pid === vip ? `👑 ${p.name}` : p.name),
-  el('span', { class: 'chip__score' }, p.score.toLocaleString('it-IT')))));
+  hideScores ? null : el('span', { class: 'chip__score' }, p.score.toLocaleString('it-IT')))));
   markRoster(pending);
 }
 
@@ -306,6 +308,7 @@ function makeCtx(story) {
       if (p) { updatePlayer(pid, { score: Math.max(0, p.score + n) }); renderRoster(); }
     },
     send: sendScreen,
+    getCard: (pid) => cards.get(pid) ?? null,
     sendCard(pid, card) {
       cards = new Map(cards).set(pid, card);
       sendRaw(pid, { t: 'card', card });
@@ -325,6 +328,7 @@ async function startStory(base, length) {
     return;
   }
   running = true;
+  hideScores = Boolean(story.hideScores);
   players = players.map((p) => ({ ...p, score: 0 }));
   cards = new Map();
   for (const p of players) sendRaw(p.pid, { t: 'card', card: null });
@@ -337,7 +341,9 @@ async function startStory(base, length) {
     while (id && id !== 'END') {
       const scene = story.scenes[id];
       if (!scene) throw new Error(`Scena mancante: ${id}`);
-      const next = scene.type === 'custom' ? await scene.run(ctx, scene) : await scenes[scene.type](scene, ctx);
+      const handler = scene.type === 'custom' ? (s, c) => s.run(c, s) : (scenes[scene.type] ?? adventure[scene.type]);
+      if (!handler) throw new Error(`Tipo di scena sconosciuto: ${scene.type}`);
+      const next = await handler(scene, ctx);
       id = story.guard?.(ctx, next) ?? next;
     }
   } catch (err) {
@@ -345,6 +351,8 @@ async function startStory(base, length) {
     await ui.banner('Ops, qualcosa è andato storto 😵 Torniamo alla lobby', 'bad', 2600);
   }
   running = false;
+  hideScores = false;
+  renderRoster();
   pending = null;
   advanceWaiter = null;
   hideAdvance();

@@ -203,3 +203,31 @@ body[data-theme='giallo'] .player-card:nth-child(even) { transform: rotate(0.7de
   .podium { grid-template-columns: repeat(3, 1fr); }
   #stage { padding: 0 1rem; }
 }
+
+/* Adventure engine: pooled test cards, split or steal, epilogues, titles */
+.pool-cards { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; margin: 1rem 0; }
+.pool-card { width: 6.5rem; height: 8.5rem; border-radius: 14px; display: grid; place-items: center; align-content: center; gap: 0.3rem;
+  background: repeating-linear-gradient(45deg, var(--panel), var(--panel) 8px, transparent 8px, transparent 16px), var(--bg2);
+  border: 2px solid var(--panel-border); font-weight: 800; animation: pop-in 0.4s both; }
+.pool-card__back { font-family: var(--font-title); font-size: 2.4rem; opacity: 0.6; }
+.pool-card.is-flipped { animation: flip-in 0.45s both; background: var(--panel); }
+.pool-card--help { border-color: var(--good); box-shadow: 0 0 22px rgba(46, 229, 157, 0.35); }
+.pool-card--sabotage { border-color: var(--bad); box-shadow: 0 0 22px rgba(255, 84, 112, 0.45); }
+.pool-card__icon { font-size: 2.4rem; }
+@keyframes flip-in { 0% { transform: rotateY(90deg); } 100% { transform: rotateY(0); } }
+.pool-summary { font-size: clamp(1.1rem, 1.8vw, 1.5rem); font-weight: 800; }
+.split-row { display: flex; justify-content: center; gap: 3rem; margin: 1rem 0; }
+.split-side { display: grid; justify-items: center; gap: 0.8rem; font-size: 1.4rem; font-weight: 800; }
+.split-card { width: 11rem; height: 7rem; border-radius: 16px; display: grid; place-items: center; font-family: var(--font-title); font-size: 1.6rem;
+  background: var(--panel); border: 3px solid var(--panel-border); animation: shake 0.6s 2; }
+.split-card.is-flipped { animation: flip-in 0.5s both; }
+.split-card.is-share { border-color: var(--good); color: var(--good); }
+.split-card.is-steal { border-color: var(--bad); color: var(--bad); }
+.epilogue { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; font-size: 1rem; }
+.titles-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; width: 100%; }
+.title-card { padding: 1rem; border-radius: 16px; background: var(--panel); border: 2px solid var(--gold); text-align: center; animation: pop-in 0.5s both; }
+.title-card__emoji { font-size: 3rem; }
+.title-card__name { font-family: var(--font-title); font-size: 1.3rem; color: var(--gold); }
+.title-card__who { font-weight: 800; font-size: 1.2rem; margin-top: 0.3rem; }
+.title-card__text { color: var(--muted); }
+.clue-card--fake .clue-card__stamp { border-color: #6a4a9a; color: #6a4a9a; }

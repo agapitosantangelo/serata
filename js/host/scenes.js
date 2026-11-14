@@ -3,6 +3,7 @@ import {
   tally, winnerIndex, quizPoints, QUIZ_BASE_POINTS, shuffleQuestion, tallyKeys, topKeys, pickOne, shuffle, rank,
 } from '../logic.js';
 import { el, sleep } from '../dom.js';
+import { setFlags } from './state.js';
 
 const REVEAL_PAUSE_MS = 900;
 const LIKELY_POINTS = 100;
@@ -10,8 +11,8 @@ const WRITE_VOTE_POINTS = 200;
 const DICE_HERO_POINTS = 300;
 const MAX_TEXT = 80;
 
-export const val = (v, ctx) => (typeof v === 'function' ? v(ctx) : v);
-const nextOf = (scene, ctx, result) => (typeof scene.next === 'function' ? scene.next(ctx, result) : scene.next);
+export const val = (v, ctx, ...rest) => (typeof v === 'function' ? v(ctx, ...rest) : v);
+export const nextOf = (scene, ctx, result) => (typeof scene.next === 'function' ? scene.next(ctx, result) : scene.next);
 const names = (players) => players.map((p) => `${p.avatar} ${p.name}`).join(' · ');
 
 export async function narr(scene, ctx) {
@@ -25,7 +26,9 @@ export async function narr(scene, ctx) {
 
 export async function vote(scene, ctx) {
   const title = val(scene.title, ctx);
-  const options = scene.options.map((o) => val(o.label, ctx));
+  // Options can be conditional on earlier choices (storylets).
+  const available = scene.options.filter((o) => !o.when || o.when(ctx));
+  const options = available.map((o) => val(o.label, ctx));
   const board = ctx.ui.voteBoard(options);
   ctx.ui.show({ art: val(scene.art, ctx), kicker: 'Votate dal telefono!', title, text: val(scene.text, ctx), body: board });
   ctx.sfx('whoosh');
@@ -36,8 +39,13 @@ export async function vote(scene, ctx) {
   ctx.sfx('reveal');
   await sleep(REVEAL_PAUSE_MS);
   ctx.ui.banner(options[win], 'neutral');
-  const chosen = scene.options[win];
+  const chosen = available[win];
+  setFlags(ctx, chosen.set);
   await chosen.effect?.(ctx);
+  if (chosen.butterfly || scene.butterfly) {
+    await sleep(1400);
+    ctx.ui.banner('🦋 Questa scelta avrà conseguenze…', 'neutral', 2000);
+  }
   await ctx.advance();
   return chosen.goto ?? nextOf(scene, ctx, win);
 }
