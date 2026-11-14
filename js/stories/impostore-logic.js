@@ -1,5 +1,5 @@
 // Pure logic for "L'Impostore": word bank, guess matching, turn order, scoring.
-import { pickOne } from '../logic.js';
+import { pickOne, shuffle } from '../logic.js';
 
 export const WORDS = {
   'Cibo': ['Pizza', 'Gelato', 'Lasagne', 'Sushi', 'Cioccolato', 'Panettone', 'Hamburger', 'Tiramisù', 'Popcorn', 'Arancino', 'Croissant', 'Polenta', 'Kebab', 'Carbonara', 'Nutella'],
@@ -75,4 +75,15 @@ export function impostorScores({ impostor, caught, guessed, votes }) {
   if (!caught) scores.set(impostor, POINTS.escape);
   else if (guessed) scores.set(impostor, POINTS.guess);
   return scores;
+}
+
+/**
+ * Rotation: each giro is a shuffled queue of players; everyone is impostor once per giro.
+ * Players who left are skipped; when the queue runs out a new giro starts with whoever is present.
+ */
+export function nextImpostor(queue, activePids, rng = Math.random) {
+  const present = queue.filter((pid) => activePids.includes(pid));
+  const newGiro = present.length === 0;
+  const [impostor, ...rest] = newGiro ? shuffle(activePids, rng) : present;
+  return { impostor, queue: rest, newGiro };
 }

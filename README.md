@@ -17,7 +17,7 @@ Gioco di società per una serata tra amici: uno schermo condiviso (PC/TV) raccon
 
 **Giochi veloci**:
 - *Quiz Show*: circa 300 domande, round a sorpresa (punti doppi, lampo, a rischio) e domande bonus (1+). Opzioni attivabili in lobby: 💰 Scommesse e 🦹 Furti.
-- *L’Impostore*: tutti conoscono la parola segreta tranne uno (3+).
+- *L’Impostore*: tutti conoscono la parola segreta tranne uno (3+). Si gioca a giro continuo: l’impostore ruota tra tutti, dopo ogni round c’è la classifica e si chiude quando volete con «Fine partita».
 
 Funziona senza server: i telefoni si collegano allo schermo in peer-to-peer (WebRTC via PeerJS). **Collegate tutti i telefoni al Wi‑Fi dello schermo**: i relay pubblici gratuiti di PeerJS non esistono più, quindi da rete mobile (4G/5G) la connessione può non riuscire. Tieni aperta la pagina dello schermo per tutta la partita.
 

@@ -1,12 +1,11 @@
 // L'Impostore: everyone knows the secret word except one. Clue words, discussion, vote.
-import { el, sleep } from '../dom.js';
-import { pickOne, rank, tallyKeys, topKeys } from '../logic.js';
-import { pickWord, turnOrder, isGuessCorrect, impostorScores } from './impostore-logic.js';
+import { el, sleep, $ } from '../dom.js';
+import { rank, tallyKeys, topKeys } from '../logic.js';
+import { pickWord, turnOrder, isGuessCorrect, impostorScores, nextImpostor } from './impostore-logic.js';
 
-const ROUNDS = { 30: 5, 60: 10 };
 const LAPS = 2;
 const CLUE_SECONDS = 35;
-const DISCUSS_SECONDS = { 30: 60, 60: 90 };
+const DISCUSS_SECONDS = 75;
 const VOTE_SECONDS = 40;
 const GUESS_SECONDS = 30;
 const MAX_WORD = 24;
@@ -29,14 +28,14 @@ function setTurn(board, pid) {
   for (const row of board.children) row.classList.toggle('is-turn', row.dataset.pid === pid);
 }
 
-async function dealCards(ctx, players, impostor, category, word, round, total) {
+async function dealCards(ctx, players, impostor, category, word) {
   for (const p of players) {
     ctx.sendCard(p.pid, p.pid === impostor
       ? { tone: 'danger', title: '🎭 SEI L’IMPOSTORE', lines: [`Categoria: ${category}`, 'Non conosci la parola segreta.', 'Ascolta gli altri e bluffa: scrivi una parola che sembri giusta!'] }
       : { tone: 'secret', title: `🔤 ${word}`, lines: [`Categoria: ${category}`, 'Scrivi una parola collegata, ma non troppo ovvia: l’impostore ti sta ascoltando!'] });
   }
   ctx.ui.show({
-    art: 'mask', kicker: `Round ${round} di ${total}`, title: `Categoria: ${category}`,
+    art: 'mask', kicker: `Round ${ctx.state.round} · giro ${ctx.state.giro}`, title: `Categoria: ${category}`,
     text: 'Guardate la parola segreta sul telefono, senza farla vedere. Uno di voi non la conosce…',
   });
   ctx.sfx('drum');
@@ -53,7 +52,7 @@ async function cluePhase(ctx, players, category) {
       const p = ctx.player(pid);
       if (!p?.connected) continue;
       setTurn(board, pid);
-      title.textContent = `Giro ${lap}/${LAPS} · tocca a ${p.avatar} ${p.name}`;
+      title.textContent = `Parola ${lap} di ${LAPS} · tocca a ${p.avatar} ${p.name}`;
       const { answers } = await ctx.collect({
         time: CLUE_SECONDS, players: [p],
         screen: { kind: 'text', title: 'Scrivi UNA parola collegata', max: MAX_WORD, placeholder: 'una parola…' },
@@ -106,17 +105,20 @@ async function lastChance(ctx, impostor, category) {
   return String(answers.get(impostor)?.value ?? '').trim();
 }
 
-async function playRound(ctx, round, total) {
+async function playRound(ctx) {
   const players = ctx.active();
   if (players.length < 3) {
     await ctx.ui.banner('Servono almeno 3 giocatori connessi', 'bad', 2400);
     return false;
   }
   const { category, word } = pickWord(ctx.state.used, ctx.rng);
-  ctx.setState({ used: new Set([...ctx.state.used, word]), round });
-  const impostor = pickOne(players, ctx.rng).pid;
+  const { impostor, queue, newGiro } = nextImpostor(ctx.state.queue, players.map((p) => p.pid), ctx.rng);
+  ctx.setState({
+    used: new Set([...ctx.state.used, word]), round: ctx.state.round + 1, queue,
+    giro: newGiro ? ctx.state.giro + 1 : ctx.state.giro,
+  });
 
-  await dealCards(ctx, players, impostor, category, word, round, total);
+  await dealCards(ctx, players, impostor, category, word);
   const board = await cluePhase(ctx, players, category);
   await discussion(ctx, board, ctx.state.discussSeconds);
   const { votes, top } = await vote(ctx, players);
@@ -152,22 +154,28 @@ async function playRound(ctx, round, total) {
   return true;
 }
 
+/** Rounds go on until the host ends the game; the impostor rotates so everyone gets a turn. */
 async function rounds(ctx) {
-  const total = ctx.state.rounds;
-  for (let round = 1; round <= total; round++) {
-    const played = await playRound(ctx, round, total);
+  for (;;) {
+    const played = await playRound(ctx);
     if (!played) break;
-    if (round < total) {
-      ctx.ui.show({ kicker: `Dopo ${round} round`, title: 'Classifica provvisoria', body: ctx.ui.leaderboard(rank(ctx.players())), layout: 'center' });
-      ctx.sfx('reveal');
-      await ctx.advance({ label: 'Prossimo round ▶', phone: 'Guarda la classifica 📊' });
-    }
+    let finish = false;
+    const stop = el('button', {
+      class: 'btn btn--ghost', onclick: () => { finish = true; $('#advance').click(); },
+    }, '🏁 Fine partita');
+    ctx.ui.show({
+      kicker: `Dopo ${ctx.state.round} round · giro ${ctx.state.giro}`, title: 'Classifica provvisoria',
+      body: el('div', { class: 'final' }, ctx.ui.leaderboard(rank(ctx.players())), stop), layout: 'center',
+    });
+    ctx.sfx('reveal');
+    await ctx.advance({ label: 'Altro round ▶', phone: 'Guarda la classifica 📊' });
+    if (finish) break;
   }
   for (const p of ctx.players()) ctx.sendCard(p.pid, null);
   return 'end';
 }
 
-function build(length) {
+function build() {
   return {
     start: 'intro',
     scenes: {
@@ -182,17 +190,18 @@ function build(length) {
         outcome: () => ({ art: 'mask', title: 'Smascherati tutti?', text: 'Chi è stato il bugiardo migliore della serata? Ecco la classifica…' }),
       },
     },
-    initialState: () => ({ used: new Set(), rounds: ROUNDS[length] ?? ROUNDS[30], discussSeconds: DISCUSS_SECONDS[length] ?? DISCUSS_SECONDS[30], round: 0 }),
-    hud: (ctx) => `🎭 Round ${ctx.state.round}/${ctx.state.rounds}`,
+    initialState: () => ({ used: new Set(), queue: [], giro: 0, round: 0, discussSeconds: DISCUSS_SECONDS }),
+    hud: (ctx) => `🎭 Round ${ctx.state.round} · giro ${ctx.state.giro}`,
   };
 }
 
 export default {
   id: 'impostore',
   title: 'L’Impostore',
-  blurb: 'Tutti conoscono la parola segreta tranne uno. Indizi a turno, discussione e voto.',
+  blurb: 'Tutti conoscono la parola segreta tranne uno. A rotazione tocca a tutti fare l’impostore: si gioca finché volete, poi classifica.',
   cover: 'mask',
   theme: 'impostore',
   minPlayers: 3,
+  continuous: true,
   build,
 };

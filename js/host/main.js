@@ -265,10 +265,12 @@ function storyCard(story) {
       el('p', {}, story.blurb),
       el('small', {}, `${story.minPlayers}+ giocatori`),
       toggles.length ? el('div', { class: 'story-card__options' }, toggles) : null,
-      el('div', { class: 'story-card__lengths' }, LENGTHS.map((minutes) => el('button', {
-        class: 'btn', onclick: () => startStory(story, minutes, Object.fromEntries([...chosen].map((id) => [id, true]))),
-        'aria-label': `${story.title}, circa ${minutes} minuti`,
-      }, `⏱ ${minutes} min`)))));
+      el('div', { class: 'story-card__lengths' }, story.continuous
+        ? el('button', { class: 'btn', onclick: () => startStory(story, null, {}) }, '▶ Gioca')
+        : LENGTHS.map((minutes) => el('button', {
+          class: 'btn', onclick: () => startStory(story, minutes, Object.fromEntries([...chosen].map((id) => [id, true]))),
+          'aria-label': `${story.title}, circa ${minutes} minuti`,
+        }, `⏱ ${minutes} min`)))));
 }
 
 function renderLobby() {

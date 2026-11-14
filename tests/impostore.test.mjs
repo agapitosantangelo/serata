@@ -61,3 +61,28 @@ test('impostorScores: escaped or guessing impostor scores', () => {
   assert.equal(guessed.get('imp'), 800);
   assert.equal(guessed.get('c'), 500);
 });
+
+test('nextImpostor gives everyone a turn before anyone repeats', async () => {
+  const { nextImpostor } = await import('../js/stories/impostore-logic.js');
+  const pids = ['a', 'b', 'c', 'd'];
+  let queue = [];
+  const seen = [];
+  for (let i = 0; i < 8; i++) {
+    const r = nextImpostor(queue, pids, seededRng(i + 1));
+    seen.push(r.impostor);
+    queue = r.queue;
+  }
+  assert.deepEqual([...seen.slice(0, 4)].sort(), pids);
+  assert.deepEqual([...seen.slice(4)].sort(), pids);
+  assert.equal(nextImpostor([], pids, seededRng(1)).newGiro, true);
+});
+
+test('nextImpostor skips players who left and includes newcomers in the next giro', async () => {
+  const { nextImpostor } = await import('../js/stories/impostore-logic.js');
+  const r = nextImpostor(['x', 'b'], ['a', 'b', 'c'], seededRng(3));
+  assert.equal(r.impostor, 'b');
+  assert.equal(r.newGiro, false);
+  const refill = nextImpostor(['x'], ['a', 'b', 'c'], seededRng(3));
+  assert.ok(['a', 'b', 'c'].includes(refill.impostor));
+  assert.equal(refill.newGiro, true);
+});
